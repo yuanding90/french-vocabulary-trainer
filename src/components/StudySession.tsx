@@ -1,0 +1,776 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useVocabularyStore } from '@/store/vocabulary-store'
+import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { 
+  ArrowLeft,
+  Volume2,
+  Check,
+  X,
+  RotateCcw,
+  Play,
+  Pause,
+  SkipForward
+} from 'lucide-react'
+import { 
+  SRS, 
+  calculateNextReview, 
+  speakText, 
+  getCardType, 
+  checkAnswer,
+  normalizeText 
+} from '@/lib/utils'
+
+interface StudySessionProps {
+  onBack: () => void
+  sessionType: 'review' | 'discovery' | 'deep-dive'
+}
+
+interface SessionProgress {
+  total: number
+  again: number
+  hard: number
+  good: number
+  easy: number
+  learn: number
+  know: number
+}
+
+export default function StudySession({ onBack, sessionType }: StudySessionProps) {
+  const { currentDeck, setCurrentWord, setSessionWords, sessionSettings } = useVocabularyStore()
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
+  const [sessionWords, setLocalSessionWords] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showAnswer, setShowAnswer] = useState(false)
+  const [cardType, setCardType] = useState<'recognition' | 'production' | 'listening'>('recognition')
+  const [userAnswer, setUserAnswer] = useState('')
+  const [isCorrect, setIsCorrect] = useState(false)
+  const [sessionProgress, setSessionProgress] = useState<SessionProgress>({
+    total: 0,
+    again: 0,
+    hard: 0,
+    good: 0,
+    easy: 0,
+    learn: 0,
+    know: 0
+  })
+
+  useEffect(() => {
+    loadSessionWords()
+  }, [])
+
+  const loadSessionWords = async () => {
+    if (!currentDeck) return
+
+    try {
+      setLoading(true)
+      
+      // First, get the vocabulary IDs for this deck
+      const { data: deckVocab, error: deckError } = await supabase
+        .from('deck_vocabulary')
+        .select('vocabulary_id')
+        .eq('deck_id', currentDeck.id)
+        .order('word_order')
+
+      if (deckError) throw deckError
+
+      if (!deckVocab || deckVocab.length === 0) {
+        console.log('No vocabulary found for deck:', currentDeck.id)
+        setLocalSessionWords([])
+        setLoading(false)
+        return
+      }
+
+      // Extract vocabulary IDs
+      const vocabIds = deckVocab.map(item => item.vocabulary_id)
+      console.log('Vocabulary IDs for deck:', vocabIds)
+
+      // Get the actual vocabulary words
+      const { data: words, error: wordsError } = await supabase
+        .from('vocabulary')
+        .select('*')
+        .in('id', vocabIds)
+
+      if (wordsError) throw wordsError
+
+      console.log('Loaded words:', words)
+
+      if (words && words.length > 0) {
+        // For review sessions, filter words that are due for review
+        let filteredWords = words
+        if (sessionType === 'review') {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data: userProgress, error: progressError } = await supabase
+              .from('user_progress')
+              .select('*')
+              .eq('user_id', user.id)
+              .eq('deck_id', currentDeck.id)
+
+            if (!progressError && userProgress) {
+              const dueWords = userProgress.filter(progress => {
+                const nextReview = new Date(progress.next_review_date)
+                return nextReview <= new Date()
+              })
+              
+              if (dueWords.length > 0) {
+                const dueWordIds = dueWords.map(p => p.word_id)
+                filteredWords = words.filter(word => dueWordIds.includes(word.id))
+              } else {
+                // If no words are due, show all words for practice
+                filteredWords = words
+              }
+            }
+          }
+        }
+
+        setLocalSessionWords(filteredWords)
+        setSessionProgress(prev => ({ ...prev, total: filteredWords.length }))
+        setCurrentWord(filteredWords[0])
+        setCardType(getRandomCardType())
+      } else {
+        setLocalSessionWords([])
+      }
+    } catch (error) {
+      console.error('Error loading session words:', error)
+      setLocalSessionWords([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getRandomCardType = (): 'recognition' | 'production' | 'listening' => {
+    const availableTypes = sessionSettings.types
+    if (availableTypes.length === 0) return 'recognition'
+    
+    const randomIndex = Math.floor(Math.random() * availableTypes.length)
+    return availableTypes[randomIndex]
+  }
+
+  const handleShowAnswer = () => {
+    setShowAnswer(true)
+  }
+
+  const handleAnswer = async (rating: 'again' | 'hard' | 'good' | 'easy' | 'learn' | 'know') => {
+    if (!currentDeck) return
+
+    const currentWord = sessionWords[currentWordIndex]
+    
+    // Update session progress
+    setSessionProgress(prev => ({
+      ...prev,
+      total: prev.total + 1,
+      [rating]: prev[rating as keyof SessionProgress] + 1
+    }))
+
+    // Save progress to database
+    await saveWordProgress(currentWord, rating)
+
+    // Move to next word or end session
+    if (currentWordIndex < sessionWords.length - 1) {
+      setCurrentWordIndex(prev => prev + 1)
+      setCurrentWord(sessionWords[currentWordIndex + 1])
+      setShowAnswer(false)
+      setUserAnswer('')
+      setIsCorrect(false)
+      setCardType(getRandomCardType())
+    } else {
+      // Session completed
+      console.log('Session completed:', sessionProgress)
+      await saveSessionSummary()
+      onBack()
+    }
+  }
+
+  const saveWordProgress = async (word: any, rating: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !currentDeck) return
+
+    try {
+      // Get existing progress
+      const { data: existingProgress } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('word_id', word.id)
+        .eq('deck_id', currentDeck.id)
+        .single()
+
+      let newInterval = 0
+      let newEaseFactor = SRS.EASE_FACTOR_DEFAULT
+      let newAgainCount = 0
+
+      if (sessionType === 'review') {
+        // SRS logic for review sessions
+        const currentInterval = existingProgress?.interval || 0
+        const currentEaseFactor = existingProgress?.ease_factor || SRS.EASE_FACTOR_DEFAULT
+        const currentAgainCount = existingProgress?.again_count || 0
+
+        if (rating === 'again') {
+          newInterval = SRS.AGAIN_INTERVAL
+          newEaseFactor = Math.max(SRS.MIN_EASE_FACTOR, currentEaseFactor - 0.2)
+          newAgainCount = currentAgainCount + 1
+        } else if (rating === 'hard') {
+          newInterval = Math.max(1, Math.floor(currentInterval * 0.6))
+          newEaseFactor = Math.max(SRS.MIN_EASE_FACTOR, currentEaseFactor - 0.15)
+          newAgainCount = currentAgainCount
+        } else if (rating === 'good') {
+          newInterval = Math.floor(currentInterval * currentEaseFactor)
+          newEaseFactor = currentEaseFactor
+          newAgainCount = currentAgainCount
+        } else if (rating === 'easy') {
+          newInterval = Math.floor(currentInterval * currentEaseFactor * 1.3)
+          newEaseFactor = currentEaseFactor + 0.15
+          newAgainCount = currentAgainCount
+        }
+      } else if (sessionType === 'discovery') {
+        // Discovery session logic
+        if (rating === 'know') {
+          newInterval = SRS.MASTERED_INTERVAL
+          newEaseFactor = SRS.EASE_FACTOR_DEFAULT
+        } else {
+          newInterval = 0
+          newEaseFactor = SRS.EASE_FACTOR_DEFAULT
+        }
+      }
+
+      const nextReviewDate = new Date()
+      if (newInterval > 0) {
+        nextReviewDate.setDate(nextReviewDate.getDate() + newInterval)
+      }
+
+      // Upsert progress
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          word_id: word.id,
+          deck_id: currentDeck.id,
+          repetitions: existingProgress?.repetitions || 0,
+          interval: newInterval,
+          ease_factor: newEaseFactor,
+          next_review_date: nextReviewDate.toISOString(),
+          again_count: newAgainCount
+        })
+
+      if (error) {
+        console.error('Error saving word progress:', error)
+      }
+    } catch (error) {
+      console.error('Error in saveWordProgress:', error)
+    }
+  }
+
+  const saveSessionSummary = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !currentDeck) return
+
+    try {
+      const { error } = await supabase
+        .from('study_sessions')
+        .insert({
+          user_id: user.id,
+          deck_id: currentDeck.id,
+          session_type: sessionType,
+          words_studied: sessionProgress.total,
+          correct_answers: sessionProgress.good + sessionProgress.easy + sessionProgress.know,
+          session_duration: 0, // TODO: Calculate actual duration
+          completed_at: new Date().toISOString()
+        })
+
+      if (error) {
+        console.error('Error saving session summary:', error)
+      }
+    } catch (error) {
+      console.error('Error in saveSessionSummary:', error)
+    }
+  }
+
+  const handleUserAnswer = () => {
+    const currentWord = sessionWords[currentWordIndex]
+    const correctAnswer = cardType === 'recognition' ? currentWord.english_translation : currentWord.french_word
+    
+    const correct = checkAnswer(userAnswer, correctAnswer)
+    setIsCorrect(correct)
+    setShowAnswer(true)
+  }
+
+  const speakWord = (text: string, language: 'fr-FR' | 'en-US' = 'fr-FR') => {
+    speakText(text, language)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl">Loading session...</div>
+      </div>
+    )
+  }
+
+  if (sessionWords.length === 0) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">No words available for this session</h2>
+          <p className="text-gray-600 mb-4">
+            {sessionType === 'review' 
+              ? 'No words are due for review at this time.' 
+              : 'This deck doesn\'t have any vocabulary words assigned yet.'}
+          </p>
+          <Button onClick={onBack}>Back to Dashboard</Button>
+        </div>
+      </div>
+    )
+  }
+
+  const currentWord = sessionWords[currentWordIndex]
+  const progressPercentage = ((currentWordIndex + 1) / sessionWords.length) * 100
+
+  return (
+    <div className="container mx-auto p-6 max-w-4xl">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            End Session
+          </Button>
+          <div className="text-sm text-gray-600">
+            {currentWordIndex + 1} / {sessionWords.length}
+          </div>
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {sessionType.charAt(0).toUpperCase() + sessionType.slice(1)} Session
+        </h1>
+        <p className="text-gray-600">
+          {currentDeck?.name} • {sessionProgress.total} completed
+        </p>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Progress</span>
+          <span>{Math.round(progressPercentage)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Session Type Specific Interface */}
+      {sessionType === 'review' ? (
+        <ReviewCard 
+          word={currentWord}
+          cardType={cardType}
+          showAnswer={showAnswer}
+          userAnswer={userAnswer}
+          setUserAnswer={setUserAnswer}
+          isCorrect={isCorrect}
+          onShowAnswer={handleShowAnswer}
+          onAnswer={handleAnswer}
+          onUserAnswer={handleUserAnswer}
+          speakWord={speakWord}
+          sessionSettings={sessionSettings}
+        />
+      ) : sessionType === 'discovery' ? (
+        <DiscoveryCard 
+          word={currentWord}
+          onAnswer={handleAnswer}
+          speakWord={speakWord}
+          sessionProgress={sessionProgress}
+        />
+      ) : (
+        <DeepDiveCard 
+          word={currentWord}
+          onAnswer={handleAnswer}
+          speakWord={speakWord}
+        />
+      )}
+
+      {/* Session Stats */}
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        {sessionType === 'review' ? (
+          <>
+            <div className="p-4 bg-red-50 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">{sessionProgress.again}</div>
+              <div className="text-sm text-red-600">Again</div>
+            </div>
+            <div className="p-4 bg-orange-50 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600">{sessionProgress.hard}</div>
+              <div className="text-sm text-orange-600">Hard</div>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{sessionProgress.good}</div>
+              <div className="text-sm text-blue-600">Good</div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{sessionProgress.easy}</div>
+              <div className="text-sm text-green-600">Easy</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{sessionProgress.learn}</div>
+              <div className="text-sm text-blue-600">Learn</div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{sessionProgress.know}</div>
+              <div className="text-sm text-green-600">Know</div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Review Card Component
+function ReviewCard({ 
+  word, 
+  cardType, 
+  showAnswer, 
+  userAnswer, 
+  setUserAnswer, 
+  isCorrect, 
+  onShowAnswer, 
+  onAnswer, 
+  onUserAnswer,
+  speakWord,
+  sessionSettings
+}: any) {
+  const prompt = cardType === 'recognition' 
+    ? 'Translate this French word:' 
+    : cardType === 'production' 
+    ? 'Translate this English word:' 
+    : 'Listen and translate:'
+  
+  const promptText = cardType === 'recognition' 
+    ? word.french_word 
+    : cardType === 'production' 
+    ? word.english_translation 
+    : ''
+
+  // Auto-play audio for listening mode
+  useEffect(() => {
+    if (cardType === 'listening') {
+      const timer = setTimeout(() => {
+        speakWord(word.french_word, 'fr-FR')
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [cardType, word.french_word, speakWord])
+
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="text-center text-4xl">
+          {cardType === 'listening' ? (
+            <div className="flex items-center justify-center gap-4">
+              <span>🎧</span>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => speakWord(word.french_word, 'fr-FR')}
+              >
+                <Volume2 className="h-6 w-6 mr-2" />
+                Listen
+              </Button>
+            </div>
+          ) : (
+            promptText
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-8">
+          {!showAnswer ? (
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-xl text-gray-600 mb-6">{prompt}</p>
+                {cardType !== 'listening' && (
+                  <input
+                    type="text"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && onUserAnswer()}
+                    placeholder="Type your answer..."
+                    className="w-full p-4 border border-gray-300 rounded-lg text-center text-2xl"
+                    autoFocus
+                  />
+                )}
+              </div>
+              <div className="text-center">
+                <Button onClick={onUserAnswer} className="px-12 py-4 text-lg">
+                  Check Answer
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className={`text-4xl font-semibold mb-6 ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                  {isCorrect ? 'Correct! 🎉' : 'Not quite...'}
+                </p>
+                <div className="space-y-4">
+                  <p className="text-2xl font-medium text-gray-900">
+                    {word.french_word} → {word.english_translation}
+                  </p>
+                  {word.example_sentence && (
+                    <div className="mt-6 p-6 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-3">Example:</p>
+                      <p className="text-lg italic">{word.example_sentence}</p>
+                      {word.sentence_translation && (
+                        <p className="text-base text-gray-500 mt-2">
+                          {word.sentence_translation}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SRS Rating Buttons */}
+              <div className="grid grid-cols-4 gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => onAnswer('again')}
+                  className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 text-lg"
+                >
+                  Again
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => onAnswer('hard')}
+                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 text-lg"
+                >
+                  Hard
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => onAnswer('good')}
+                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-lg"
+                >
+                  Good
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => onAnswer('easy')}
+                  className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100 text-lg"
+                >
+                  Easy
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Discovery Card Component
+function DiscoveryCard({ word, onAnswer, speakWord, sessionProgress }: any) {
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="text-center text-5xl font-bold">
+          {word.french_word}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-8">
+          {/* Learn/Know Stats Tracker */}
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-3xl font-bold text-blue-600">{sessionProgress.learn}</div>
+              <div className="text-lg text-blue-600">Learn</div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-3xl font-bold text-green-600">{sessionProgress.know}</div>
+              <div className="text-lg text-green-600">Know</div>
+            </div>
+          </div>
+
+          {/* Audio Button */}
+          <div className="text-center">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => speakWord(word.french_word, 'fr-FR')}
+              className="mb-6"
+            >
+              <Volume2 className="h-6 w-6 mr-2" />
+              Listen to Pronunciation
+            </Button>
+          </div>
+
+          {/* Choice Buttons */}
+          <div className="text-center">
+            <p className="text-xl text-gray-600 mb-6">
+              Do you know what this word means?
+            </p>
+            <div className="flex gap-6 justify-center">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => onAnswer('learn')}
+                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-lg px-8"
+              >
+                Learn This
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => onAnswer('know')}
+                className="bg-green-600 hover:bg-green-700 text-lg px-8"
+              >
+                I Know This
+              </Button>
+            </div>
+          </div>
+
+          {/* Translation and Examples Box */}
+          <div className="mt-8 p-8 bg-gray-50 rounded-lg text-center">
+            <div className="space-y-6">
+              {/* Translation */}
+              <div className="flex items-center justify-center gap-4">
+                <p className="text-2xl font-medium">{word.english_translation}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => speakWord(word.english_translation, 'en-US')}
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Example Sentence */}
+              {word.example_sentence && (
+                <div className="space-y-3">
+                  <p className="text-lg text-gray-600">Example:</p>
+                  <div className="flex items-center justify-center gap-4">
+                    <p className="text-lg italic">{word.example_sentence}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => speakWord(word.example_sentence, 'fr-FR')}
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {word.sentence_translation && (
+                    <div className="flex items-center justify-center gap-4">
+                      <p className="text-base text-gray-500">
+                        {word.sentence_translation}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => speakWord(word.sentence_translation, 'en-US')}
+                      >
+                        <Volume2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Deep Dive Card Component
+function DeepDiveCard({ word, onAnswer, speakWord }: any) {
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="text-center text-4xl font-bold">
+          {word.french_word}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-8">
+          {/* Audio Button */}
+          <div className="text-center">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => speakWord(word.french_word, 'fr-FR')}
+              className="mb-6"
+            >
+              <Volume2 className="h-6 w-6 mr-2" />
+              Listen to Pronunciation
+            </Button>
+          </div>
+
+          <div className="space-y-6">
+            {/* Translation */}
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-4">
+                <p className="text-2xl font-medium text-blue-600">{word.english_translation}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => speakWord(word.english_translation, 'en-US')}
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Example Sentence */}
+            {word.example_sentence && (
+              <div className="p-6 bg-gray-50 rounded-lg text-center">
+                <p className="text-lg text-gray-600 mb-3">Example:</p>
+                <div className="flex items-center justify-center gap-4">
+                  <p className="text-lg italic">{word.example_sentence}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => speakWord(word.example_sentence, 'fr-FR')}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                {word.sentence_translation && (
+                  <div className="flex items-center justify-center gap-4 mt-3">
+                    <p className="text-base text-gray-500">
+                      {word.sentence_translation}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => speakWord(word.sentence_translation, 'en-US')}
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="text-center">
+            <Button onClick={() => onAnswer('good')} className="px-12 py-4 text-lg">
+              Continue
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
