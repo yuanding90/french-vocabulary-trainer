@@ -119,8 +119,17 @@ export default function Dashboard() {
 
   const loadDeckData = async (deckId: string, userId: string) => {
     try {
+      console.log('Loading deck data for deck:', deckId, 'user:', userId)
+      
       // Build queues
       const queues = await sessionQueueManager.buildQueues(deckId, userId)
+      console.log('Built queues:', {
+        unseen: queues.unseen.length,
+        review: queues.review.length,
+        practice: queues.practice.length,
+        nearFuture: queues.nearFuture.length
+      })
+      
       setUnseenQueue(queues.unseen)
       setReviewQueue(queues.review)
       setPracticePool(queues.practice)
@@ -128,6 +137,7 @@ export default function Dashboard() {
 
       // Calculate metrics
       const deckMetrics = await sessionQueueManager.calculateMetrics(userId, deckId)
+      console.log('Calculated metrics:', deckMetrics)
       updateMetrics(deckMetrics)
     } catch (error) {
       console.error('Error loading deck data:', error)
@@ -442,6 +452,27 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-4">
               Review words you've learned using spaced repetition
             </p>
+            
+            {/* Queue Numbers */}
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              {reviewQueue.length > 0 ? (
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{reviewQueue.length}</div>
+                  <div className="text-sm text-blue-600">Due Now</div>
+                </div>
+              ) : nearFutureQueue.length > 0 ? (
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{nearFutureQueue.length}</div>
+                  <div className="text-sm text-orange-600">Due Soon</div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-400">0</div>
+                  <div className="text-sm text-gray-400">No words due</div>
+                </div>
+              )}
+            </div>
+            
             <Button 
               onClick={() => handleStartSession('review')}
               className="w-full"
@@ -463,6 +494,15 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-4">
               Learn new words from your selected deck
             </p>
+            
+            {/* Queue Numbers */}
+            <div className="mb-4 p-3 bg-green-50 rounded-lg">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{unseenQueue.length}</div>
+                <div className="text-sm text-green-600">Unseen Words</div>
+              </div>
+            </div>
+            
             <Button 
               onClick={() => handleStartSession('discovery')}
               className="w-full"
