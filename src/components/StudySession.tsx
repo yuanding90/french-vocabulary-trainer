@@ -802,8 +802,20 @@ function ReviewCard({
                     </div>
                   ) : (
                     <div className="text-center space-y-6">
-                      <div className="text-6xl font-bold text-gray-900 mb-8">
-                        {promptText}
+                      <div className="flex items-center justify-center gap-4 mb-8">
+                        <div className="text-6xl font-bold text-gray-900">
+                          {promptText}
+                        </div>
+                        {cardType === 'recognition' && (
+                          <Button
+                            variant="ghost"
+                            size="lg"
+                            onClick={() => speakWord(word.french_word, 'fr-FR')}
+                            className="p-3"
+                          >
+                            <Volume2 className="h-8 w-8" />
+                          </Button>
+                        )}
                       </div>
                       <input
                         type="text"
