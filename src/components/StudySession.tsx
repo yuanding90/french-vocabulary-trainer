@@ -830,13 +830,13 @@ function ReviewCard({
                   )}
                 </div>
 
-                {/* Check Answer Button */}
+                {/* Reveal Answer Button */}
                 <div className="text-center mt-8">
                   <Button 
                     onClick={onUserAnswer} 
                     className="px-12 py-4 text-xl bg-blue-600 hover:bg-blue-700"
                   >
-                    Check Answer
+                    Reveal Answer
                   </Button>
                 </div>
               </div>
