@@ -4,8 +4,7 @@ import {
   Vocabulary, 
   UserProgress, 
   VocabularyDeck, 
-  UserDeckProgress, 
-  StudySession 
+  UserDeckProgress
 } from '@/lib/supabase'
 
 export interface SessionSettings {
@@ -76,7 +75,7 @@ const defaultSessionSettings: SessionSettings = {
 
 export const useVocabularyStore = create<VocabularyState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       currentWord: null,
       sessionWords: [],
