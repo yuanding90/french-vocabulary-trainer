@@ -201,10 +201,20 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
 
         // Merge word data with progress data for current word tracking
         const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
-        const wordsWithProgress = filteredWords.map(word => ({
-          ...word,
-          ...progressMap.get(word.id)
-        }))
+        console.log('Progress map sample:', Array.from(progressMap.entries()).slice(0, 3))
+        
+        const wordsWithProgress = filteredWords.map(word => {
+          const progress = progressMap.get(word.id)
+          if (progress) {
+            console.log(`Word ${word.id} progress data:`, progress)
+          }
+          return {
+            ...word,
+            // Preserve the word's integer ID and merge progress data
+            id: word.id, // Keep the original integer ID from vocabulary
+            ...progress // Merge progress data (but don't override id)
+          }
+        })
 
         setLocalSessionWords(wordsWithProgress)
         setSessionProgress(prev => ({ ...prev, total: wordsWithProgress.length }))
