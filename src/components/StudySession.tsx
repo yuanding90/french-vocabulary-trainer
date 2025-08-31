@@ -108,14 +108,18 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         // Filter words based on session type
         let filteredWords = words
         const { data: { user } } = await supabase.auth.getUser()
+        let userProgress: any[] = []
+        
         if (user) {
-          const { data: userProgress, error: progressError } = await supabase
+          const { data: progressData, error: progressError } = await supabase
             .from('user_progress')
             .select('*')
             .eq('user_id', user.id)
             .eq('deck_id', currentDeck.id)
 
-          if (!progressError && userProgress) {
+          if (!progressError && progressData) {
+            userProgress = progressData
+            
             if (sessionType === 'review') {
               // Create a map of word progress for efficient lookup
               const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
@@ -189,7 +193,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         }
 
         // Merge word data with progress data for current word tracking
-        const progressMap = new Map(userProgress?.map(p => [p.word_id, p]) || [])
+        const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
         const wordsWithProgress = filteredWords.map(word => ({
           ...word,
           ...progressMap.get(word.id)
