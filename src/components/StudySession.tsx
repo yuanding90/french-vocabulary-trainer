@@ -499,7 +499,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       {sessionType === 'review' && (
         <div className="mb-8">
           {/* Overall Statistics */}
-          <div className="grid grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-6 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-700">{sessionWords.length - currentWordIndex}</div>
               <div className="text-sm text-gray-500">Remaining</div>
@@ -524,23 +524,6 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
               <div className="text-2xl font-bold text-purple-600">{sessionProgress.total}</div>
               <div className="text-sm text-gray-500">Reviewed</div>
             </div>
-          </div>
-          
-          {/* Session Summary */}
-          <div className="text-center text-sm text-gray-600 border-t pt-4">
-            <span className="font-medium">Session Summary:</span>
-            <span className="mx-2">•</span>
-            <span>Reviewed: <span className="font-semibold text-purple-600">{sessionProgress.total}</span></span>
-            <span className="mx-2">•</span>
-            <span>Again: <span className="font-semibold text-red-600">{sessionProgress.again}</span></span>
-            <span className="mx-2">•</span>
-            <span>Hard: <span className="font-semibold text-orange-600">{sessionProgress.hard}</span></span>
-            <span className="mx-2">•</span>
-            <span>Good: <span className="font-semibold text-green-600">{sessionProgress.good}</span></span>
-            <span className="mx-2">•</span>
-            <span>Easy: <span className="font-semibold text-blue-600">{sessionProgress.easy}</span></span>
-            <span className="mx-2">•</span>
-            <span>Remaining: <span className="font-semibold text-gray-700">{sessionWords.length - currentWordIndex}</span></span>
           </div>
         </div>
       )}
