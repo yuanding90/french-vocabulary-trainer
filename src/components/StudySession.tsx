@@ -631,7 +631,7 @@ function ReviewCard({
               <div className="flex flex-col h-full">
                 {/* Status on top */}
                 <div className="text-center mb-6">
-                  <p className={`text-lg font-semibold ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                  <p className={`text-2xl font-semibold ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
                     {isCorrect ? 'Correct! 🎉' : 'Not quite...'}
                   </p>
                 </div>
@@ -640,47 +640,47 @@ function ReviewCard({
                 <div className="flex-1 flex flex-col justify-center items-center space-y-6">
                   {/* French Word with Pronunciation */}
                   <div className="flex items-center justify-center gap-4">
-                    <p className="text-4xl font-bold text-gray-900">{word.french_word}</p>
+                    <p className="text-6xl font-bold text-gray-900">{word.french_word}</p>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => speakWord(word.french_word, 'fr-FR')}
                       className="p-2"
                     >
-                      <Volume2 className="h-6 w-6" />
+                      <Volume2 className="h-8 w-8" />
                     </Button>
                   </div>
 
                   {/* English Translation with Pronunciation */}
                   <div className="flex items-center justify-center gap-4">
-                    <p className="text-2xl font-medium text-gray-700">{word.english_translation}</p>
+                    <p className="text-4xl font-medium text-gray-700">{word.english_translation}</p>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => speakWord(word.english_translation, 'en-US')}
                       className="p-2"
                     >
-                      <Volume2 className="h-5 w-5" />
+                      <Volume2 className="h-6 w-6" />
                     </Button>
                   </div>
 
                   {/* Example Sentence with Pronunciation */}
                   {word.example_sentence && (
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-2">Example:</p>
+                    <div className="p-6 bg-gray-50 rounded-lg">
+                      <p className="text-lg text-gray-600 mb-3">Example:</p>
                       <div className="flex items-center justify-center gap-4">
-                        <p className="text-base italic">{word.example_sentence}</p>
+                        <p className="text-xl italic">{word.example_sentence}</p>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => speakWord(word.example_sentence, 'fr-FR')}
                         >
-                          <Volume2 className="h-4 w-4" />
+                          <Volume2 className="h-5 w-5" />
                         </Button>
                       </div>
                       {word.sentence_translation && (
-                        <div className="flex items-center justify-center gap-4 mt-2">
-                          <p className="text-sm text-gray-500">
+                        <div className="flex items-center justify-center gap-4 mt-3">
+                          <p className="text-lg text-gray-500">
                             {word.sentence_translation}
                           </p>
                           <Button
@@ -688,7 +688,7 @@ function ReviewCard({
                             size="sm"
                             onClick={() => speakWord(word.sentence_translation, 'en-US')}
                           >
-                            <Volume2 className="h-4 w-4" />
+                            <Volume2 className="h-5 w-5" />
                           </Button>
                         </div>
                       )}
