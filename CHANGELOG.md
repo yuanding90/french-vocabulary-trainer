@@ -69,6 +69,38 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 - Added back "Recent Activity" header with Activity icon
 - Used flex layout to ensure consistent button positioning across all session cards
 
+### ✅ Step 5: Review Session Flash Card Design (Commit: 710a61b, c48598f, 366abdc)
+**Date:** Current Session
+**Changes:**
+- Implemented flash card design with flip animation using CSS transforms
+- Put "not quite/correct" status on top of French vocabulary with smaller font
+- Removed duplicate French word from header
+- Created card flip effect when "Check Answer" is clicked
+- Increased font sizes on back side for better visibility (French: text-6xl, English: text-4xl, Example: text-xl)
+- Fixed leech button size and border overlap issues
+- Made leech buttons larger with better visual hierarchy (full-width, text-xl, larger icons)
+- Removed Session Summary line from progress visualization for cleaner look
+
+### ✅ Review Session Progress Visualization (Commit: 41f5ec4)
+**Date:** Current Session
+**Changes:**
+- Added dynamic progress visualization at top of review sessions
+- 6-column grid showing: Remaining, Again, Hard, Good, Easy, Reviewed
+- Real-time updates as user progresses through session
+- Color-coded categories matching rating button colors
+- Removed redundant Session Summary line for cleaner look
+
+### ✅ Review Session Fallback Hierarchy (Commit: 79f22b7)
+**Date:** Current Session
+**Changes:**
+- Implemented three-tier fallback system for review sessions:
+  1. Due Now words (overdue for review)
+  2. Due Soon words (coming up in next 24 hours)
+  3. Unseen words (never studied before)
+- Added console logging to track which word category is being used
+- Automatic fallback when no words available in higher priority tiers
+- Integration with discovery sessions (reviewed words excluded from discovery)
+
 ### ✅ Step 1: Choose Deck at the Top (Commit: eba8202)
 **Date:** Previous Session
 **Changes:**
@@ -116,15 +148,6 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 - ✅ Verified no sensitive data in commits
 
 ## Pending Changes (To-Do List)
-
-### 🔄 Step 5: Review Session Flash Card Design
-**Status:** Ready to implement
-**Changes needed:**
-- Implement flash card design with flip animation
-- Put "not quite/correct" on top of French vocabulary
-- Make status font smaller
-- Remove duplicate French word on top
-- Create card flip effect when "Check Answer" is clicked
 
 ### 🔄 Step 6: Study Session SRS Logic
 **Status:** Ready to implement
@@ -198,6 +221,11 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 - `ea9dc8f` - Force new deployment to clear cache
 - `eba8202` - Step 1: Choose Deck at the top
 - `0805657` - Step 2: Compact Deck List
+- `710a61b` - Flash Card: Increase font sizes on back side for better visibility
+- `c48598f` - Flash Card: Fix leech button size and border overlap issues
+- `366abdc` - Remove Session Summary line from review progress visualization
+- `41f5ec4` - Add dynamic progress visualization to review sessions
+- `79f22b7` - Implement review session fallback hierarchy: Due Now → Due Soon → Unseen words
 
 ---
 *Last Updated: Current Session*
