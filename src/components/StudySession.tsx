@@ -13,7 +13,8 @@ import {
   RotateCcw,
   Play,
   Pause,
-  SkipForward
+  SkipForward,
+  AlertTriangle
 } from 'lucide-react'
 import { 
   SRS, 
@@ -58,6 +59,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     learn: 0,
     know: 0
   })
+  const [currentWord, setCurrentWordState] = useState<any>(null)
 
   useEffect(() => {
     loadSessionWords()
@@ -154,6 +156,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         setLocalSessionWords(filteredWords)
         setSessionProgress(prev => ({ ...prev, total: filteredWords.length }))
         setCurrentWord(filteredWords[0])
+        setCurrentWordState(filteredWords[0])
         setCardType(getRandomCardType())
       } else {
         setLocalSessionWords([])
@@ -178,10 +181,21 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     setShowAnswer(true)
   }
 
-  const handleAnswer = async (rating: 'again' | 'hard' | 'good' | 'easy' | 'learn' | 'know') => {
+  const handleAnswer = async (rating: 'again' | 'hard' | 'good' | 'easy' | 'learn' | 'know' | 'leech' | 'remove-leech') => {
     if (!currentDeck) return
 
     const currentWord = sessionWords[currentWordIndex]
+    
+    // Handle leech actions
+    if (rating === 'leech') {
+      await markWordAsLeech(currentWord)
+      return
+    }
+    
+    if (rating === 'remove-leech') {
+      await removeWordFromLeech(currentWord)
+      return
+    }
     
     // Update session progress
     setSessionProgress(prev => ({
@@ -197,6 +211,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     if (currentWordIndex < sessionWords.length - 1) {
       setCurrentWordIndex(prev => prev + 1)
       setCurrentWord(sessionWords[currentWordIndex + 1])
+      setCurrentWordState(sessionWords[currentWordIndex + 1])
       setShowAnswer(false)
       setUserAnswer('')
       setIsCorrect(false)
@@ -206,6 +221,52 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       console.log('Session completed:', sessionProgress)
       await saveSessionSummary()
       onBack()
+    }
+  }
+
+  const markWordAsLeech = async (word: any) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !currentDeck) return
+
+    try {
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          word_id: word.id,
+          deck_id: currentDeck.id,
+          is_leech: true
+        }, { onConflict: 'user_id,word_id,deck_id' })
+
+      if (error) throw error
+      console.log('Word marked as leech:', word.french_word)
+      // Update current word state
+      setCurrentWordState(prev => prev ? { ...prev, is_leech: true } : null)
+    } catch (error) {
+      console.error('Error marking word as leech:', error)
+    }
+  }
+
+  const removeWordFromLeech = async (word: any) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !currentDeck) return
+
+    try {
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          word_id: word.id,
+          deck_id: currentDeck.id,
+          is_leech: false
+        }, { onConflict: 'user_id,word_id,deck_id' })
+
+      if (error) throw error
+      console.log('Word removed from leeches:', word.french_word)
+      // Update current word state
+      setCurrentWordState(prev => prev ? { ...prev, is_leech: false } : null)
+    } catch (error) {
+      console.error('Error removing word from leeches:', error)
     }
   }
 
@@ -392,6 +453,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       {sessionType === 'review' ? (
         <ReviewCard 
           word={currentWord}
+          currentWord={currentWordState}
           cardType={cardType}
           showAnswer={showAnswer}
           userAnswer={userAnswer}
@@ -418,40 +480,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         />
       )}
 
-      {/* Session Stats */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-        {sessionType === 'review' ? (
-          <>
-            <div className="p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{sessionProgress.again}</div>
-              <div className="text-sm text-red-600">Again</div>
-            </div>
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{sessionProgress.hard}</div>
-              <div className="text-sm text-orange-600">Hard</div>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{sessionProgress.good}</div>
-              <div className="text-sm text-blue-600">Good</div>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{sessionProgress.easy}</div>
-              <div className="text-sm text-green-600">Easy</div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{sessionProgress.learn}</div>
-              <div className="text-sm text-blue-600">Learn</div>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{sessionProgress.know}</div>
-              <div className="text-sm text-green-600">Know</div>
-            </div>
-          </>
-        )}
-      </div>
+
     </div>
   )
 }
@@ -459,6 +488,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
 // Review Card Component
 function ReviewCard({ 
   word, 
+  currentWord,
   cardType, 
   showAnswer, 
   userAnswer, 
@@ -543,22 +573,63 @@ function ReviewCard({
                 <p className={`text-4xl font-semibold mb-6 ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
                   {isCorrect ? 'Correct! 🎉' : 'Not quite...'}
                 </p>
-                <div className="space-y-4">
-                  <p className="text-2xl font-medium text-gray-900">
-                    {word.french_word} → {word.english_translation}
-                  </p>
-                  {word.example_sentence && (
-                    <div className="mt-6 p-6 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-3">Example:</p>
-                      <p className="text-lg italic">{word.example_sentence}</p>
-                      {word.sentence_translation && (
-                        <p className="text-base text-gray-500 mt-2">
+                
+                {/* French Word with Pronunciation */}
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <p className="text-3xl font-bold text-gray-900">{word.french_word}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => speakWord(word.french_word, 'fr-FR')}
+                    className="p-2"
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* English Translation with Pronunciation */}
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  <p className="text-2xl font-medium text-gray-700">{word.english_translation}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => speakWord(word.english_translation, 'en-US')}
+                    className="p-2"
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* Example Sentence with Pronunciation */}
+                {word.example_sentence && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-2">Example:</p>
+                    <div className="flex items-center justify-center gap-4">
+                      <p className="text-base italic">{word.example_sentence}</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => speakWord(word.example_sentence, 'fr-FR')}
+                      >
+                        <Volume2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {word.sentence_translation && (
+                      <div className="flex items-center justify-center gap-4 mt-2">
+                        <p className="text-sm text-gray-500">
                           {word.sentence_translation}
                         </p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => speakWord(word.sentence_translation, 'en-US')}
+                        >
+                          <Volume2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* SRS Rating Buttons */}
@@ -595,6 +666,31 @@ function ReviewCard({
                 >
                   Easy
                 </Button>
+              </div>
+
+              {/* Add/Remove from Leeches Option */}
+              <div className="text-center pt-4 border-t">
+                {currentWord?.is_leech ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAnswer('remove-leech')}
+                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Remove from Leeches
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAnswer('leech')}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Add to Leeches
+                  </Button>
+                )}
               </div>
             </div>
           )}
