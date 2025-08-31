@@ -262,19 +262,32 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     if (!user || !currentDeck) return
 
     try {
+      // Get existing progress to preserve other fields
+      const { data: existingProgress } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('word_id', word.id)
+        .eq('deck_id', currentDeck.id)
+        .single()
+
       const { error } = await supabase
         .from('user_progress')
         .upsert({
           user_id: user.id,
           word_id: word.id,
           deck_id: currentDeck.id,
-          is_leech: true
+          repetitions: existingProgress?.repetitions || 0,
+          interval: existingProgress?.interval || 0,
+          ease_factor: existingProgress?.ease_factor || SRS.EASE_FACTOR_DEFAULT,
+          next_review_date: existingProgress?.next_review_date || new Date().toISOString(),
+          again_count: SRS.LEECH_THRESHOLD // Mark as leech by setting again_count to threshold
         }, { onConflict: 'user_id,word_id,deck_id' })
 
       if (error) throw error
       console.log('Word marked as leech:', word.french_word)
       // Update current word state
-      setCurrentWord(prev => prev ? { ...prev, is_leech: true } : null)
+      setCurrentWord(prev => prev ? { ...prev, again_count: SRS.LEECH_THRESHOLD } : null)
     } catch (error) {
       console.error('Error marking word as leech:', error)
     }
@@ -285,19 +298,32 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     if (!user || !currentDeck) return
 
     try {
+      // Get existing progress to preserve other fields
+      const { data: existingProgress } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('word_id', word.id)
+        .eq('deck_id', currentDeck.id)
+        .single()
+
       const { error } = await supabase
         .from('user_progress')
         .upsert({
           user_id: user.id,
           word_id: word.id,
           deck_id: currentDeck.id,
-          is_leech: false
+          repetitions: existingProgress?.repetitions || 0,
+          interval: existingProgress?.interval || 0,
+          ease_factor: existingProgress?.ease_factor || SRS.EASE_FACTOR_DEFAULT,
+          next_review_date: existingProgress?.next_review_date || new Date().toISOString(),
+          again_count: 0 // Remove from leeches by resetting again_count to 0
         }, { onConflict: 'user_id,word_id,deck_id' })
 
       if (error) throw error
       console.log('Word removed from leeches:', word.french_word)
       // Update current word state
-      setCurrentWord(prev => prev ? { ...prev, is_leech: false } : null)
+      setCurrentWord(prev => prev ? { ...prev, again_count: 0 } : null)
     } catch (error) {
       console.error('Error removing word from leeches:', error)
     }
@@ -823,7 +849,7 @@ function ReviewCard({
 
                   {/* Add/Remove from Leeches Option */}
                   <div className="text-center pt-6 border-t-2 border-gray-300">
-                    {currentWord?.is_leech ? (
+                    {currentWord?.again_count >= SRS.LEECH_THRESHOLD ? (
                       <Button
                         variant="outline"
                         size="lg"
