@@ -149,13 +149,101 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 
 ## Pending Changes (To-Do List)
 
-### 🔄 Step 6: Study Session SRS Logic
-**Status:** Ready to implement
-**Changes needed:**
-- Implement proper SRS calculations
-- Fix metrics calculation for dashboard
-- Ensure user progress data is correctly processed
-- Debug queue numbers showing 0
+### 🔄 Step 6: Study Session SRS Logic - COMPREHENSIVE FIXES
+**Status:** Analysis Complete - Ready to implement
+**Priority:** HIGH - Critical for proper spaced repetition
+
+#### **Database Schema Updates:**
+- [ ] **Add `repetitions` column to `user_progress` table**
+  - Field: `repetitions INTEGER DEFAULT 0`
+  - Purpose: Track how many times a word has been successfully reviewed
+  - Required for proper SRS interval calculations
+
+- [ ] **Create `rating_history` table**
+  - Fields: `id`, `word_id`, `rating`, `timestamp`
+  - Purpose: Track consecutive ratings for leech removal logic
+  - Required for sophisticated leech management
+
+#### **SRS Algorithm Fixes:**
+- [ ] **Fix interval calculation for new words**
+  - Current: Always uses `Math.floor(currentInterval * easeFactor)`
+  - Required: 
+    - `repetitions === 0`: `interval = 1`
+    - `repetitions === 1`: `interval = 6`
+    - `repetitions > 1`: `interval = Math.ceil(interval * ease_factor)`
+
+- [ ] **Fix ease factor calculation**
+  - Current: Simple increments/decrements
+  - Required: Complex formula: `ease_factor + (0.1 - (5 - ratingValue) * (0.08 + (5 - ratingValue) * 0.02))`
+  - Rating values: hard=3, good=4, easy=5
+
+- [ ] **Fix hard rating logic**
+  - Current: `Math.floor(currentInterval * 0.6)`
+  - Required: `Math.max(1, Math.ceil(interval / 2))`
+
+- [ ] **Add repetitions tracking to SRS logic**
+  - Increment repetitions on 'good' or 'easy' ratings
+  - Reset repetitions to 0 on 'again' rating
+  - Use repetitions for interval calculations
+
+#### **Leech Management Enhancements:**
+- [ ] **Implement leech removal logic**
+  - Remove from leeches after 2 consecutive 'easy' ratings
+  - Only if interval >= 7 days
+  - Reset `again_count` to 0
+
+- [ ] **Add rating history tracking**
+  - Log every rating with timestamp
+  - Track last 10 ratings for leech removal decisions
+  - Store in `rating_history` table
+
+- [ ] **Implement leech spacing in queue building**
+  - Separate leeches from regular words
+  - Insert leeches every 3-5 regular words
+  - Prevent leech fatigue
+
+#### **Queue System Improvements:**
+- [ ] **Enhance near future queue logic**
+  - Current: Uses `isNearFuture()` function
+  - Required: Check if due within next 24 hours
+  - Add visual indicators for near future words
+
+- [ ] **Fix queue numbers display**
+  - Debug why metrics show 0
+  - Ensure proper queue calculation
+  - Add queue debug panel
+
+#### **Code Structure Updates:**
+- [ ] **Update `saveWordProgress` function**
+  - Add repetitions logic
+  - Implement proper SRS algorithm
+  - Add rating history logging
+
+- [ ] **Update `SessionQueueManager`**
+  - Add leech spacing logic
+  - Enhance queue building
+  - Fix metrics calculation
+
+- [ ] **Add leech removal functions**
+  - `removeFromLeech()` function
+  - Rating history analysis
+  - Automatic leech removal
+
+#### **Testing & Validation:**
+- [ ] **Test SRS algorithm accuracy**
+  - Compare intervals with HTML app
+  - Verify ease factor calculations
+  - Test leech removal logic
+
+- [ ] **Test queue building**
+  - Verify leech spacing
+  - Test near future queue
+  - Validate metrics calculation
+
+- [ ] **Performance optimization**
+  - Optimize database queries
+  - Reduce unnecessary recalculations
+  - Add caching where appropriate
 
 ### 🔄 Step 7: Additional UI Polish
 **Status:** Ready to implement
@@ -195,6 +283,43 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 - Queue numbers not updating correctly
 - Some visual layout issues in study sessions
 
+### SRS Logic Analysis (Current Session)
+**Date:** Current Session
+**Analysis:** Compared our SRS implementation with the HTML app's proven algorithm
+
+#### **Critical Differences Found:**
+1. **Missing Repetitions Tracking**: Our app doesn't track `repetitions` field, which is essential for proper interval calculations
+2. **Incorrect SRS Algorithm**: Our ease factor and interval calculations don't match the proven HTML app algorithm
+3. **Missing Leech Removal**: No sophisticated leech removal logic with rating history tracking
+4. **Basic Queue Building**: No leech spacing or advanced queue management
+5. **Incomplete Near Future Logic**: Near future queue logic needs enhancement
+
+#### **HTML App SRS Algorithm (Reference):**
+```javascript
+// Proper interval calculation
+if (repetitions === 0) interval = 1;
+else if (repetitions === 1) interval = 6;
+else interval = Math.ceil(interval * ease_factor);
+
+// Proper ease factor calculation
+const ratingValue = { hard: 3, good: 4, easy: 5 }[rating];
+ease_factor = Math.max(MIN_EASE_FACTOR, ease_factor + (0.1 - (5 - ratingValue) * (0.08 + (5 - ratingValue) * 0.02)));
+
+// Leech removal logic
+if (wasLeech && rating === 'easy' && interval >= 7) {
+  const recentRatings = getRecentRatings(wordId);
+  if (recentRatings.length >= 2 && recentRatings.slice(-2).every(r => r === 'easy')) {
+    again_count = 0; // Remove from leeches
+  }
+}
+```
+
+#### **Impact:**
+- Users may experience suboptimal spaced repetition intervals
+- Leech words may not be properly managed
+- Queue building may not provide optimal learning experience
+- Metrics may be inaccurate due to incorrect calculations
+
 ## Future Enhancements (Post-Core Features)
 - [ ] Export progress data
 - [ ] Statistics and analytics
@@ -226,6 +351,7 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 - `366abdc` - Remove Session Summary line from review progress visualization
 - `41f5ec4` - Add dynamic progress visualization to review sessions
 - `79f22b7` - Implement review session fallback hierarchy: Due Now → Due Soon → Unseen words
+- `1dd3242` - Update CHANGELOG.md with all recent completed features and commits
 
 ---
 *Last Updated: Current Session*
