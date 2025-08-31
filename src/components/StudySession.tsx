@@ -463,7 +463,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       // Log the data being sent for debugging
       const progressData = {
         user_id: user.id,
-        word_id: typeof word.id === 'string' ? parseInt(word.id) : word.id,
+        word_id: word.id, // Keep as UUID string
         deck_id: currentDeck.id,
         repetitions: newRepetitions,
         interval: newInterval,

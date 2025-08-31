@@ -13,7 +13,7 @@ DROP TABLE IF EXISTS user_progress CASCADE;
 CREATE TABLE user_progress (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    word_id INTEGER NOT NULL,
+    word_id UUID NOT NULL REFERENCES vocabulary(id) ON DELETE CASCADE,
     deck_id UUID REFERENCES vocabulary_decks(id) ON DELETE CASCADE,
     repetitions INTEGER DEFAULT 0,
     interval REAL DEFAULT 0,

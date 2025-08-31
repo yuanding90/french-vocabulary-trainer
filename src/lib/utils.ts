@@ -131,7 +131,7 @@ export function checkAnswer(userAnswer: string, correctAnswer: string): boolean 
 // Rating history utilities for leech removal logic
 export async function logRating(
   userId: string,
-  wordId: string | number,
+  wordId: string,
   deckId: string,
   rating: 'again' | 'hard' | 'good' | 'easy' | 'learn' | 'know'
 ): Promise<void> {
@@ -140,7 +140,7 @@ export async function logRating(
       .from('rating_history')
       .insert({
         user_id: userId,
-        word_id: typeof wordId === 'string' ? parseInt(wordId) : wordId,
+        word_id: wordId, // Keep as UUID string
         deck_id: deckId,
         rating,
         timestamp: new Date().toISOString()
@@ -166,7 +166,7 @@ export async function logRating(
 
 export async function getRecentRatings(
   userId: string,
-  wordId: string | number,
+  wordId: string,
   limit: number = 10
 ): Promise<string[]> {
   try {
@@ -174,7 +174,7 @@ export async function getRecentRatings(
       .from('rating_history')
       .select('rating')
       .eq('user_id', userId)
-      .eq('word_id', typeof wordId === 'string' ? parseInt(wordId) : wordId)
+      .eq('word_id', wordId) // Keep as UUID string
       .order('timestamp', { ascending: false })
       .limit(limit)
 
