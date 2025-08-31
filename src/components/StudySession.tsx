@@ -411,7 +411,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     )
   }
 
-  const currentWord = sessionWords[currentWordIndex]
+  const currentWordData = sessionWords[currentWordIndex]
   const progressPercentage = ((currentWordIndex + 1) / sessionWords.length) * 100
 
   return (
@@ -452,7 +452,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       {/* Session Type Specific Interface */}
       {sessionType === 'review' ? (
         <ReviewCard 
-          word={currentWord}
+          word={currentWordData}
           currentWord={currentWordState}
           cardType={cardType}
           showAnswer={showAnswer}
@@ -467,14 +467,14 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         />
       ) : sessionType === 'discovery' ? (
         <DiscoveryCard 
-          word={currentWord}
+          word={currentWordData}
           onAnswer={handleAnswer}
           speakWord={speakWord}
           sessionProgress={sessionProgress}
         />
       ) : (
         <DeepDiveCard 
-          word={currentWord}
+          word={currentWordData}
           onAnswer={handleAnswer}
           speakWord={speakWord}
         />
