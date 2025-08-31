@@ -328,7 +328,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       }
 
       // Upsert progress
-      const { error } = await supabase
+      let { error } = await supabase
         .from('user_progress')
         .upsert({
           user_id: user.id,
@@ -339,10 +339,56 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
           ease_factor: newEaseFactor,
           next_review_date: nextReviewDate.toISOString(),
           again_count: newAgainCount
-        })
+        }, { onConflict: 'user_id,word_id,deck_id' })
 
       if (error) {
         console.error('Error saving word progress:', error)
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
+        
+        // Fallback: try insert, then update if that fails
+        console.log('Attempting fallback strategy...')
+        const { error: insertError } = await supabase
+          .from('user_progress')
+          .insert({
+            user_id: user.id,
+            word_id: word.id,
+            deck_id: currentDeck.id,
+            repetitions: existingProgress?.repetitions || 0,
+            interval: newInterval,
+            ease_factor: newEaseFactor,
+            next_review_date: nextReviewDate.toISOString(),
+            again_count: newAgainCount
+          })
+        
+        if (insertError) {
+          console.error('Insert also failed:', insertError)
+          // Try update as last resort
+          const { error: updateError } = await supabase
+            .from('user_progress')
+            .update({
+              repetitions: existingProgress?.repetitions || 0,
+              interval: newInterval,
+              ease_factor: newEaseFactor,
+              next_review_date: nextReviewDate.toISOString(),
+              again_count: newAgainCount
+            })
+            .eq('user_id', user.id)
+            .eq('word_id', word.id)
+            .eq('deck_id', currentDeck.id)
+          
+          if (updateError) {
+            console.error('Update also failed:', updateError)
+          } else {
+            console.log('Update succeeded as fallback')
+          }
+        } else {
+          console.log('Insert succeeded as fallback')
+        }
       }
     } catch (error) {
       console.error('Error in saveWordProgress:', error)
