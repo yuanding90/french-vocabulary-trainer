@@ -5,6 +5,18 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 
 ## Completed Changes
 
+### ✅ CURRENT SESSION: Data Type & Database Fixes (Commits: a84f186, 86c614d, ee1561f, dfe57cf, 6404c6e, 0c42596, b9bb0a8, 92c080b, fcddde4, 46c0921, fd0c58d, 2add141, 4e503e5, 4927481, 13d3029, b92d218)
+**Date:** Current Session
+**Changes:**
+- **Fixed UUID/Integer Data Type Mismatch**: Resolved foreign key constraint errors by ensuring consistent data types between vocabulary table (INTEGER IDs) and user_progress table (INTEGER word_id)
+- **Enhanced Progress Data Merging**: Fixed word ID override issue where progress data was overriding vocabulary integer IDs with UUID strings
+- **Added Robust Error Handling**: Made rating history functions handle missing tables gracefully with warnings instead of errors
+- **Fixed Discovery Session Progress**: Updated "Total Unseen" to "Remaining Unseen" with dynamic calculation (total - reviewed)
+- **Enhanced Review Session UX**: Added pronunciation button to front of flash card before flipping
+- **Updated Button Text**: Changed "Check Answer" to "Reveal Answer" for better UX clarity
+- **Fixed Deck-Specific Data Loading**: Added useEffect to reload metrics and queues when current deck changes
+- **Added Comprehensive Debugging**: Enhanced logging to identify and resolve data type issues
+
 ### ✅ PRIORITY 1: Deep Dive Session - Category Selection (Commit: 04bab3a)
 **Date:** Current Session
 **Changes:**
@@ -352,7 +364,23 @@ if (wasLeech && rating === 'easy' && interval >= 7) {
 - `41f5ec4` - Add dynamic progress visualization to review sessions
 - `79f22b7` - Implement review session fallback hierarchy: Due Now → Due Soon → Unseen words
 - `1dd3242` - Update CHANGELOG.md with all recent completed features and commits
+- `a84f186` - Fix leech management: add progress data to words, fix next word navigation
+- `86c614d` - Fix userProgress scope issue in loadSessionWords
+- `ee1561f` - Make rating history functions robust - handle missing table gracefully
+- `dfe57cf` - Fix rating_history table foreign key constraint - change word_id from UUID to INTEGER
+- `6404c6e` - Fix discovery session progress tracking - reviewed count now updates dynamically
+- `0c42596` - Fix SessionProgress interface - add reviewed field to prevent NaN errors
+- `b9bb0a8` - Add detailed debugging to saveWordProgress - log data types and full error objects
+- `92c080b` - Fix UUID/Integer mismatch - update user_progress and rating_history tables
+- `fcddde4` - Add progress visualization to discovery session - show total unseen words and reviewed count
+- `46c0921` - Add detailed debugging to identify word ID data type mismatch
+- `fd0c58d` - Fix progress data merging - explicitly merge only specific fields to prevent ID override
+- `2add141` - Fix progress data merging - explicitly merge only specific fields to prevent ID override
+- `4e503e5` - Fix deck-specific data loading - add useEffect to reload metrics and queues when current deck changes
+- `4927481` - Fix discovery session progress display - show remaining unseen count that updates as words are reviewed
+- `13d3029` - Add pronunciation button to review session front card and enhance deck progress visualization
+- `b92d218` - Update review session button text from 'Check Answer' to 'Reveal Answer'
 
 ---
-*Last Updated: Current Session*
-*Next Step: Step 3 - Move Learning Types to Bottom*
+*Last Updated: Current Session - All recent fixes and improvements logged*
+*Next Step: Continue with SRS logic improvements and additional UI polish*
