@@ -158,7 +158,6 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         setLocalSessionWords(filteredWords)
         setSessionProgress(prev => ({ ...prev, total: filteredWords.length }))
         setCurrentWord(filteredWords[0])
-        setCurrentWordState(filteredWords[0])
         setCardType(getRandomCardType())
       } else {
         setLocalSessionWords([])
@@ -213,7 +212,6 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     if (currentWordIndex < sessionWords.length - 1) {
       setCurrentWordIndex(prev => prev + 1)
       setCurrentWord(sessionWords[currentWordIndex + 1])
-      setCurrentWordState(sessionWords[currentWordIndex + 1])
       setShowAnswer(false)
       setUserAnswer('')
       setIsCorrect(false)
@@ -243,7 +241,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       if (error) throw error
       console.log('Word marked as leech:', word.french_word)
       // Update current word state
-      setCurrentWordState(prev => prev ? { ...prev, is_leech: true } : null)
+      setCurrentWord(prev => prev ? { ...prev, is_leech: true } : null)
     } catch (error) {
       console.error('Error marking word as leech:', error)
     }
@@ -266,7 +264,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       if (error) throw error
       console.log('Word removed from leeches:', word.french_word)
       // Update current word state
-      setCurrentWordState(prev => prev ? { ...prev, is_leech: false } : null)
+      setCurrentWord(prev => prev ? { ...prev, is_leech: false } : null)
     } catch (error) {
       console.error('Error removing word from leeches:', error)
     }
@@ -455,7 +453,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       {sessionType === 'review' ? (
         <ReviewCard 
           word={currentWordData}
-          currentWord={currentWordState}
+          currentWord={currentWord}
           cardType={cardType}
           showAnswer={showAnswer}
           userAnswer={userAnswer}
