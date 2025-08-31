@@ -97,7 +97,7 @@ export class SessionQueueManager implements QueueManager {
 
       if (progressError) throw progressError
 
-      const progressMap = new Map(userProgress?.map(p => [p.word_id, p]) || [])
+      const progressMap = new Map<number, any>(userProgress?.map(p => [p.word_id, p]) || [])
 
       // Build queues
       const unseen: Vocabulary[] = []
