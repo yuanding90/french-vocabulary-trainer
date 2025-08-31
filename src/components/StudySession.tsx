@@ -697,7 +697,7 @@ function ReviewCard({
                 </div>
 
                 {/* Bottom section */}
-                <div className="mt-8 space-y-4">
+                <div className="mt-8 space-y-6">
                   {/* SRS Rating Buttons */}
                   <div className="grid grid-cols-4 gap-3">
                     <Button
@@ -735,25 +735,25 @@ function ReviewCard({
                   </div>
 
                   {/* Add/Remove from Leeches Option */}
-                  <div className="text-center pt-4 border-t">
+                  <div className="text-center pt-6 border-t-2 border-gray-300">
                     {currentWord?.is_leech ? (
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="outline"
+                        size="lg"
                         onClick={() => onAnswer('remove-leech')}
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        className="w-full bg-green-50 border-green-200 text-green-700 hover:bg-green-100 text-xl py-4"
                       >
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="h-6 w-6 mr-3" />
                         Remove from Leeches
                       </Button>
                     ) : (
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="outline"
+                        size="lg"
                         onClick={() => onAnswer('leech')}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="w-full bg-red-50 border-red-200 text-red-700 hover:bg-red-100 text-xl py-4"
                       >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        <AlertTriangle className="h-6 w-6 mr-3" />
                         Add to Leeches
                       </Button>
                     )}
