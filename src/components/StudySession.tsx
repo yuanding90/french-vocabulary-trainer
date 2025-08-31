@@ -102,53 +102,55 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       console.log('Loaded words:', words)
 
       if (words && words.length > 0) {
-        // For review sessions, filter words that are due for review
+        // Filter words based on session type
         let filteredWords = words
-        if (sessionType === 'review') {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const { data: userProgress, error: progressError } = await supabase
-              .from('user_progress')
-              .select('*')
-              .eq('user_id', user.id)
-              .eq('deck_id', currentDeck.id)
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: userProgress, error: progressError } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('deck_id', currentDeck.id)
 
-            if (!progressError && userProgress) {
-              if (sessionType === 'review') {
-                const dueWords = userProgress.filter(progress => {
-                  const nextReview = new Date(progress.next_review_date)
-                  return nextReview <= new Date()
-                })
-                
-                if (dueWords.length > 0) {
-                  const dueWordIds = dueWords.map(p => p.word_id)
-                  filteredWords = words.filter(word => dueWordIds.includes(word.id))
-                } else {
-                  // If no words are due, show all words for practice
-                  filteredWords = words
-                }
-              } else if (sessionType === 'deep-dive' && deepDiveCategory) {
-                // For deep dive, filter based on selected category
-                const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
-                
-                filteredWords = words.filter(word => {
-                  const progress = progressMap.get(word.id)
-                  if (!progress) return false
-                  
-                  switch (deepDiveCategory) {
-                    case 'leeches':
-                      return progress.again_count >= 4
-                    case 'learning':
-                      return progress.again_count < 4 && progress.interval < 7
-                    case 'strengthening':
-                      return progress.again_count < 4 && progress.interval >= 7 && progress.interval < 21
-                    case 'consolidating':
-                      return progress.again_count < 4 && progress.interval >= 21 && progress.interval < 60
-                    default:
-                      return false
-                  }
-                })
+          if (!progressError && userProgress) {
+            if (sessionType === 'review') {
+              const dueWords = userProgress.filter(progress => {
+                const nextReview = new Date(progress.next_review_date)
+                return nextReview <= new Date()
+              })
+              
+              if (dueWords.length > 0) {
+                const dueWordIds = dueWords.map(p => p.word_id)
+                filteredWords = words.filter(word => dueWordIds.includes(word.id))
+              } else {
+                // If no words are due, show all words for practice
+                filteredWords = words
               }
+            } else if (sessionType === 'discovery') {
+              // For discovery sessions, exclude words that have already been learned
+              const learnedWordIds = userProgress.map(p => p.word_id)
+              filteredWords = words.filter(word => !learnedWordIds.includes(word.id))
+            } else if (sessionType === 'deep-dive' && deepDiveCategory) {
+              // For deep dive, filter based on selected category
+              const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
+              
+              filteredWords = words.filter(word => {
+                const progress = progressMap.get(word.id)
+                if (!progress) return false
+                
+                switch (deepDiveCategory) {
+                  case 'leeches':
+                    return progress.again_count >= 4
+                  case 'learning':
+                    return progress.again_count < 4 && progress.interval < 7
+                  case 'strengthening':
+                    return progress.again_count < 4 && progress.interval >= 7 && progress.interval < 21
+                  case 'consolidating':
+                    return progress.again_count < 4 && progress.interval >= 21 && progress.interval < 60
+                  default:
+                    return false
+                }
+              })
             }
           }
         }
@@ -704,107 +706,88 @@ function ReviewCard({
 function DiscoveryCard({ word, onAnswer, speakWord, sessionProgress }: any) {
   return (
     <Card className="mb-8">
-      <CardHeader>
-        <CardTitle className="text-center text-5xl font-bold">
-          {word.french_word}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="p-8">
         <div className="space-y-8">
-          {/* Learn/Know Stats Tracker */}
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="text-3xl font-bold text-blue-600">{sessionProgress.learn}</div>
-              <div className="text-lg text-blue-600">Learn</div>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="text-3xl font-bold text-green-600">{sessionProgress.know}</div>
-              <div className="text-lg text-green-600">Know</div>
+          {/* French Word with Pronunciation */}
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <h1 className="text-6xl font-bold text-gray-900">{word.french_word}</h1>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => speakWord(word.french_word, 'fr-FR')}
+                className="p-3"
+              >
+                <Volume2 className="h-8 w-8" />
+              </Button>
             </div>
           </div>
 
-          {/* Audio Button */}
+          {/* English Translation with Pronunciation */}
           <div className="text-center">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => speakWord(word.french_word, 'fr-FR')}
-              className="mb-6"
-            >
-              <Volume2 className="h-6 w-6 mr-2" />
-              Listen to Pronunciation
-            </Button>
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <p className="text-4xl font-medium text-gray-700">{word.english_translation}</p>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => speakWord(word.english_translation, 'en-US')}
+                className="p-3"
+              >
+                <Volume2 className="h-6 w-6" />
+              </Button>
+            </div>
           </div>
+
+          {/* Example Sentence with Pronunciation */}
+          {word.example_sentence && (
+            <div className="text-center p-6 bg-gray-50 rounded-lg">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-4">
+                  <p className="text-2xl italic text-gray-800">{word.example_sentence}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => speakWord(word.example_sentence, 'fr-FR')}
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </Button>
+                </div>
+                {word.sentence_translation && (
+                  <div className="flex items-center justify-center gap-4">
+                    <p className="text-xl text-gray-600">
+                      {word.sentence_translation}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => speakWord(word.sentence_translation, 'en-US')}
+                    >
+                      <Volume2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Choice Buttons */}
-          <div className="text-center">
-            <p className="text-xl text-gray-600 mb-6">
-              Do you know what this word means?
-            </p>
+          <div className="text-center pt-6">
             <div className="flex gap-6 justify-center">
               <Button
                 variant="outline"
                 size="lg"
                 onClick={() => onAnswer('learn')}
-                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-lg px-8"
+                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xl px-12 py-6"
               >
                 Learn This
               </Button>
               <Button
                 size="lg"
                 onClick={() => onAnswer('know')}
-                className="bg-green-600 hover:bg-green-700 text-lg px-8"
+                className="bg-green-600 hover:bg-green-700 text-xl px-12 py-6"
               >
                 I Know This
               </Button>
-            </div>
-          </div>
-
-          {/* Translation and Examples Box */}
-          <div className="mt-8 p-8 bg-gray-50 rounded-lg text-center">
-            <div className="space-y-6">
-              {/* Translation */}
-              <div className="flex items-center justify-center gap-4">
-                <p className="text-2xl font-medium">{word.english_translation}</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => speakWord(word.english_translation, 'en-US')}
-                >
-                  <Volume2 className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {/* Example Sentence */}
-              {word.example_sentence && (
-                <div className="space-y-3">
-                  <p className="text-lg text-gray-600">Example:</p>
-                  <div className="flex items-center justify-center gap-4">
-                    <p className="text-lg italic">{word.example_sentence}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => speakWord(word.example_sentence, 'fr-FR')}
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {word.sentence_translation && (
-                    <div className="flex items-center justify-center gap-4">
-                      <p className="text-base text-gray-500">
-                        {word.sentence_translation}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => speakWord(word.sentence_translation, 'en-US')}
-                      >
-                        <Volume2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
