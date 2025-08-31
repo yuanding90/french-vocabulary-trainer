@@ -188,9 +188,16 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
           }
         }
 
-        setLocalSessionWords(filteredWords)
-        setSessionProgress(prev => ({ ...prev, total: filteredWords.length }))
-        setCurrentWord(filteredWords[0])
+        // Merge word data with progress data for current word tracking
+        const progressMap = new Map(userProgress?.map(p => [p.word_id, p]) || [])
+        const wordsWithProgress = filteredWords.map(word => ({
+          ...word,
+          ...progressMap.get(word.id)
+        }))
+
+        setLocalSessionWords(wordsWithProgress)
+        setSessionProgress(prev => ({ ...prev, total: wordsWithProgress.length }))
+        setCurrentWord(wordsWithProgress[0])
         setCardType(getRandomCardType())
       } else {
         setLocalSessionWords([])
@@ -286,8 +293,22 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
 
       if (error) throw error
       console.log('Word marked as leech:', word.french_word)
-      // Update current word state
-      setCurrentWord(prev => prev ? { ...prev, again_count: SRS.LEECH_THRESHOLD } : null)
+      
+      // Move to next word after marking as leech
+      if (currentWordIndex < sessionWords.length - 1) {
+        const nextIndex = currentWordIndex + 1
+        setCurrentWordIndex(nextIndex)
+        setCurrentWord(sessionWords[nextIndex])
+        setShowAnswer(false)
+        setUserAnswer('')
+        setIsCorrect(false)
+        setCardType(getRandomCardType())
+      } else {
+        // Session completed
+        console.log('Session completed:', sessionProgress)
+        await saveSessionSummary()
+        onBack()
+      }
     } catch (error) {
       console.error('Error marking word as leech:', error)
     }
@@ -322,8 +343,22 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
 
       if (error) throw error
       console.log('Word removed from leeches:', word.french_word)
-      // Update current word state
-      setCurrentWord(prev => prev ? { ...prev, again_count: 0 } : null)
+      
+      // Move to next word after removing from leeches
+      if (currentWordIndex < sessionWords.length - 1) {
+        const nextIndex = currentWordIndex + 1
+        setCurrentWordIndex(nextIndex)
+        setCurrentWord(sessionWords[nextIndex])
+        setShowAnswer(false)
+        setUserAnswer('')
+        setIsCorrect(false)
+        setCardType(getRandomCardType())
+      } else {
+        // Session completed
+        console.log('Session completed:', sessionProgress)
+        await saveSessionSummary()
+        onBack()
+      }
     } catch (error) {
       console.error('Error removing word from leeches:', error)
     }
