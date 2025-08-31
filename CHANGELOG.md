@@ -5,8 +5,72 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 
 ## Completed Changes
 
-### ✅ Step 1: Choose Deck at the Top (Commit: eba8202)
+### ✅ PRIORITY 1: Deep Dive Session - Category Selection (Commit: 04bab3a)
 **Date:** Current Session
+**Changes:**
+- Added dropdown menu for category selection on Dashboard (not in session)
+- Options: leeches, learning, strengthening, consolidating
+- Start Deep Dive button disabled until category is selected
+- Passed deepDiveCategory prop to StudySession component
+- Updated loadSessionWords to filter based on selected category
+
+### ✅ PRIORITY 2: Review Session - Leeches Management (Commit: 3a8af20)
+**Date:** Current Session
+**Changes:**
+- Added pronunciation options for all elements (French word, translation, example sentence)
+- Added "Add to Leeches" button (red, AlertTriangle icon) for words not in leeches
+- Added "Remove from Leeches" button (green, Check icon) for words already in leeches
+- Implemented markWordAsLeech and removeWordFromLeech functions
+- Removed repetitive stats display at bottom
+- Enhanced Review Card layout with better organization
+
+### ✅ PRIORITY 3: Dashboard Metrics Fixes (Commit: 535308b)
+**Date:** Current Session
+**Changes:**
+- Added queue numbers to Review box (Due Now/Due Soon in order)
+- Added queue numbers to Discovery box (Unseen count)
+- Added debugging logs for queue calculation
+- Fixed queue numbers display in session cards
+
+### ✅ Step 4: Discovery Session Improvements (Commit: 578e1c8)
+**Date:** Current Session
+**Changes:**
+- Removed progress bar on top
+- Removed duplicate Learn/Know stats bars
+- Put English translation below French word
+- Removed "listen to pronunciation" button
+- Added pronunciation icon next to French word
+- Made font bigger for French sentence and English translation
+- Added pronunciation icon for English translation
+- Filtered out words already learned in discovery sessions
+- Reorganized layout for better visual hierarchy
+
+### ✅ NEW PRIORITY: Dashboard Layout Improvements (Commit: 397024c)
+**Date:** Current Session
+**Changes:**
+- Removed Quick Actions bar entirely from landing page
+- Moved Recent Activity below Current Deck and above Deck Progress
+- Put Unseen/Leeches/Learning etc. inside Deck Progress section
+- Added progress bar to Deck Progress
+- Removed Total words/mastered/progress display
+- Enhanced visualization buttons for Review/Discovery/Deep Dive with colors and icons
+
+### ✅ Dashboard Layout: Recent Activity Positioning (Commit: e57791f)
+**Date:** Current Session
+**Changes:**
+- Moved Recent Activity to the very top above Current Deck
+- Made Recent Activity more compact with smaller text and shorter labels
+- Added colored metrics (blue Today, green 7 Days, purple 30 Days, orange Streak)
+
+### ✅ Dashboard Layout: Button Alignment & Header (Commit: 801d50f)
+**Date:** Current Session
+**Changes:**
+- Aligned Start Review/Discovery/Deep Dive buttons horizontally using flexbox
+- Added back "Recent Activity" header with Activity icon
+- Used flex layout to ensure consistent button positioning across all session cards
+
+### ✅ Step 1: Choose Deck at the Top (Commit: eba8202)
+**Date:** Previous Session
 **Changes:**
 - Added prominent "Choose Deck" card at the very top of the dashboard
 - Shows current deck name with difficulty level
@@ -15,7 +79,7 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 - Cleaned up layout and spacing
 
 ### ✅ Step 2: Compact Deck List (Commit: 0805657)
-**Date:** Current Session
+**Date:** Previous Session
 **Changes:**
 - Changed from 2-column grid to single column layout (one deck per row)
 - Added compact design with reduced padding
@@ -53,78 +117,38 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 
 ## Pending Changes (To-Do List)
 
-### 🔄 NEW PRIORITY: Dashboard Layout Improvements
-**Status:** Ready to implement
-**Changes needed:**
-1. Remove Quick Actions bar entirely on landing page
-2. Put Recent Activity below Current Deck and above Deck Progress
-3. Put Unseen/Leeches/Learning etc. inside Deck Progress, add progress bar, remove Total words/mastered/progress
-4. In Review and Discovery, put better visualization buttons on Start Review and Start Discovery
-
-### 🔄 Step 3: Move Learning Types to Bottom
-**Status:** Ready to implement
-**Changes needed:**
-- Move "Learning Types Configuration" section to the bottom of the dashboard
-- Keep current functionality intact
-
-### 🔄 Step 4: Add Queue Status Section
-**Status:** Ready to implement  
-**Changes needed:**
-- Add "Queue Status" section at the very bottom
-- Display: Due Now, Due Soon, Practice, Unseen
-- Show actual queue numbers (not always 0)
-- Similar to French app HTML file reference
-
-### 🔄 Step 5: Discovery Session Improvements
-**Status:** Ready to implement
-**Changes needed:**
-- Remove progress bar on top
-- Remove duplicate Learn/Know stats bars
-- Put English translation below French word
-- Remove "listen to pronunciation" button
-- Add pronunciation icon next to French word
-- Make font bigger for French sentence and English translation
-- Add pronunciation icon for English translation
-- Filter out words already learned
-
-### 🔄 Step 6: Review Session Improvements
+### 🔄 Step 5: Review Session Flash Card Design
 **Status:** Ready to implement
 **Changes needed:**
 - Implement flash card design with flip animation
 - Put "not quite/correct" on top of French vocabulary
 - Make status font smaller
 - Remove duplicate French word on top
-- Add pronunciation options for French word, translation, example sentence
-- Add/Remove from Leeches option
-- Show if word is already in Leeches list
+- Create card flip effect when "Check Answer" is clicked
 
-### 🔄 Step 7: Dashboard Metrics Fixes
-**Status:** Ready to implement
-**Changes needed:**
-- Review box: Show Due Now/Due Soon numbers in order
-- Discovery box: Show Unseen numbers
-- Fix queue numbers (currently showing 0)
-- Change "Queue States" to "Queue Status"
-
-### 🔄 Step 8: Deep Dive Session Improvements
-**Status:** Ready to implement
-**Changes needed:**
-- Use dropdown menu for category selection
-- Options: leeches, learning, strengthening, consolidating
-
-### 🔄 Step 9: Visual Button Improvements
-**Status:** Ready to implement
-**Changes needed:**
-- Start Review button (blue, Play icon)
-- Start Discovery button (green, Target icon)  
-- Start Deep Dive button (purple, Brain icon)
-
-### 🔄 Step 10: Study Session SRS Logic
+### 🔄 Step 6: Study Session SRS Logic
 **Status:** Ready to implement
 **Changes needed:**
 - Implement proper SRS calculations
 - Fix metrics calculation for dashboard
 - Ensure user progress data is correctly processed
+- Debug queue numbers showing 0
+
+### 🔄 Step 7: Additional UI Polish
+**Status:** Ready to implement
+**Changes needed:**
+- Add loading states for better UX
+- Improve error handling and user feedback
+- Add confirmation dialogs for important actions
+- Optimize performance for large decks
+
+### 🔄 Step 8: Advanced Features
+**Status:** Future implementation
+**Changes needed:**
+- Export progress data functionality
+- Statistics and analytics dashboard
+- Custom deck creation
+- Social features (leaderboards, sharing)
 
 ## Technical Notes
 
