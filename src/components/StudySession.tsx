@@ -981,8 +981,8 @@ function DiscoveryCard({ word, onAnswer, speakWord, sessionProgress }: any) {
         <div className="mb-8">
           <div className="grid grid-cols-2 gap-4 text-center">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-700">{sessionProgress.total}</div>
-              <div className="text-sm text-blue-600">Total Unseen</div>
+              <div className="text-2xl font-bold text-blue-700">{sessionProgress.total - sessionProgress.reviewed}</div>
+              <div className="text-sm text-blue-600">Remaining Unseen</div>
             </div>
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <div className="text-2xl font-bold text-green-700">{sessionProgress.reviewed}</div>
