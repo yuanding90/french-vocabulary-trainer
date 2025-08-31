@@ -349,97 +349,7 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Learning Types Configuration */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Learning Types
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Learning Type Options */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Select Learning Types</Label>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleSelectAllTypes}
-                  >
-                    Select All
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleClearAllTypes}
-                  >
-                    Clear All
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                  <Checkbox
-                    id="recognition"
-                    checked={sessionSettings.types.includes('recognition')}
-                    onCheckedChange={() => handleLearningTypeToggle('recognition')}
-                  />
-                  <Label htmlFor="recognition" className="flex items-center gap-2 cursor-pointer flex-1">
-                    <Eye className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <div className="font-medium">French → English</div>
-                      <div className="text-sm text-gray-600">Recognition</div>
-                    </div>
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                  <Checkbox
-                    id="production"
-                    checked={sessionSettings.types.includes('production')}
-                    onCheckedChange={() => handleLearningTypeToggle('production')}
-                  />
-                  <Label htmlFor="production" className="flex items-center gap-2 cursor-pointer flex-1">
-                    <MessageSquare className="h-5 w-5 text-green-600" />
-                    <div>
-                      <div className="font-medium">English → French</div>
-                      <div className="text-sm text-gray-600">Production</div>
-                    </div>
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                  <Checkbox
-                    id="listening"
-                    checked={sessionSettings.types.includes('listening')}
-                    onCheckedChange={() => handleLearningTypeToggle('listening')}
-                  />
-                  <Label htmlFor="listening" className="flex items-center gap-2 cursor-pointer flex-1">
-                    <Ear className="h-5 w-5 text-purple-600" />
-                    <div>
-                      <div className="font-medium">Voice First</div>
-                      <div className="text-sm text-gray-600">Listening</div>
-                    </div>
-                  </Label>
-                </div>
-              </div>
-            </div>
 
-            {/* Status */}
-            {sessionSettings.types.length === 0 && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  ⚠️ Please select at least one learning type to start sessions.
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Progress Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
@@ -576,6 +486,98 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Learning Types Configuration - At the bottom */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Learning Types
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Learning Type Options */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Label className="text-base font-medium">Select Learning Types</Label>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleSelectAllTypes}
+                  >
+                    Select All
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleClearAllTypes}
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                  <Checkbox
+                    id="recognition"
+                    checked={sessionSettings.types.includes('recognition')}
+                    onCheckedChange={() => handleLearningTypeToggle('recognition')}
+                  />
+                  <Label htmlFor="recognition" className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Eye className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <div className="font-medium">French → English</div>
+                      <div className="text-sm text-gray-600">Recognition</div>
+                    </div>
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                  <Checkbox
+                    id="production"
+                    checked={sessionSettings.types.includes('production')}
+                    onCheckedChange={() => handleLearningTypeToggle('production')}
+                  />
+                  <Label htmlFor="production" className="flex items-center gap-2 cursor-pointer flex-1">
+                    <MessageSquare className="h-5 w-5 text-green-600" />
+                    <div>
+                      <div className="font-medium">English → French</div>
+                      <div className="text-sm text-gray-600">Production</div>
+                    </div>
+                  </Label>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                  <Checkbox
+                    id="listening"
+                    checked={sessionSettings.types.includes('listening')}
+                    onCheckedChange={() => handleLearningTypeToggle('listening')}
+                  />
+                  <Label htmlFor="listening" className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Ear className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <div className="font-medium">Voice First</div>
+                      <div className="text-sm text-gray-600">Listening</div>
+                    </div>
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            {/* Status */}
+            {sessionSettings.types.length === 0 && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ Please select at least one learning type to start sessions.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
