@@ -95,6 +95,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       // Extract vocabulary IDs
       const vocabIds = deckVocab.map(item => item.vocabulary_id)
       console.log('Vocabulary IDs for deck:', vocabIds)
+      console.log('Vocabulary ID types:', vocabIds.map(id => typeof id))
 
       // Get the actual vocabulary words
       const { data: words, error: wordsError } = await supabase
@@ -105,6 +106,10 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       if (wordsError) throw wordsError
 
       console.log('Loaded words:', words)
+      if (words && words.length > 0) {
+        console.log('First word ID type:', typeof words[0].id)
+        console.log('First word ID value:', words[0].id)
+      }
 
       if (words && words.length > 0) {
         // Filter words based on session type
@@ -461,6 +466,8 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       }
 
       // Log the data being sent for debugging
+      console.log('Word ID before conversion:', word.id, 'Type:', typeof word.id)
+      
       const progressData = {
         user_id: user.id,
         word_id: parseInt(word.id), // Convert string ID to integer for database
