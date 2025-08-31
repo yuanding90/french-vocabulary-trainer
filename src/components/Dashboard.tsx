@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [showDeckSelection, setShowDeckSelection] = useState(false)
   const [showStudySession, setShowStudySession] = useState(false)
   const [sessionType, setSessionType] = useState<'review' | 'discovery' | 'deep-dive' | null>(null)
+  const [deepDiveCategory, setDeepDiveCategory] = useState<'leeches' | 'learning' | 'strengthening' | 'consolidating' | null>(null)
 
   useEffect(() => {
     loadDashboardData()
@@ -290,17 +291,46 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Current Deck */}
+      {/* Choose Deck Button - At the very top */}
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Current Deck</h2>
+              {currentDeck ? (
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
+                  <span className="text-lg font-medium">{currentDeck.name}</span>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                    {currentDeck.difficulty_level}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-gray-600">No deck selected</p>
+              )}
+            </div>
+            <Button 
+              onClick={() => setShowDeckSelection(true)}
+              className="flex items-center gap-2"
+            >
+              <LibraryBig className="h-4 w-4" />
+              {currentDeck ? 'Change Deck' : 'Choose Deck'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Current Deck Progress */}
       {currentDeck && (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Current Deck: {currentDeck.name}
+              <Activity className="h-5 w-5" />
+              Deck Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-blue-600">{totalWords}</p>
                 <p className="text-sm text-gray-600">Total Words</p>
@@ -314,7 +344,7 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-600">Progress</p>
               </div>
             </div>
-            <Progress value={progressPercentage} className="mt-4" />
+            <Progress value={progressPercentage} className="h-3" />
           </CardContent>
         </Card>
       )}
