@@ -39,6 +39,24 @@ export function calculateNextReview(
       newRepetitions = repetitions
       break
     case 'good':
+      // Proper interval calculation based on repetitions (HTML app logic)
+      if (repetitions === 0) {
+        newInterval = SRS.NEW_WORD_INTERVAL
+      } else if (repetitions === 1) {
+        newInterval = 6
+      } else {
+        newInterval = Math.ceil(currentInterval * easeFactor)
+      }
+      
+      // Proper ease factor calculation (HTML app logic)
+      const ratingValue = 4 // good rating
+      newEaseFactor = Math.max(
+        SRS.MIN_EASE_FACTOR, 
+        easeFactor + (0.1 - (5 - ratingValue) * (0.08 + (5 - ratingValue) * 0.02))
+      )
+      
+      newRepetitions = repetitions + 1
+      break
     case 'easy':
       // Proper interval calculation based on repetitions (HTML app logic)
       if (repetitions === 0) {
@@ -50,10 +68,10 @@ export function calculateNextReview(
       }
       
       // Proper ease factor calculation (HTML app logic)
-      const ratingValue = rating === 'hard' ? 3 : rating === 'good' ? 4 : 5
+      const ratingValueEasy = 5 // easy rating
       newEaseFactor = Math.max(
         SRS.MIN_EASE_FACTOR, 
-        easeFactor + (0.1 - (5 - ratingValue) * (0.08 + (5 - ratingValue) * 0.02))
+        easeFactor + (0.1 - (5 - ratingValueEasy) * (0.08 + (5 - ratingValueEasy) * 0.02))
       )
       
       newRepetitions = repetitions + 1
