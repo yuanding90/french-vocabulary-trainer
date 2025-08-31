@@ -570,176 +570,198 @@ function ReviewCard({
 
   return (
     <Card className="mb-8">
-      <CardHeader>
-        <CardTitle className="text-center text-4xl">
-          {cardType === 'listening' ? (
-            <div className="flex items-center justify-center gap-4">
-              <span>🎧</span>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => speakWord(word.french_word, 'fr-FR')}
-              >
-                <Volume2 className="h-6 w-6 mr-2" />
-                Listen
-              </Button>
-            </div>
-          ) : (
-            promptText
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
-          {!showAnswer ? (
-            <div className="space-y-6">
-              <div className="text-center">
-                <p className="text-xl text-gray-600 mb-6">{prompt}</p>
-                {cardType !== 'listening' && (
-                  <input
-                    type="text"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && onUserAnswer()}
-                    placeholder="Type your answer..."
-                    className="w-full p-4 border border-gray-300 rounded-lg text-center text-2xl"
-                    autoFocus
-                  />
-                )}
-              </div>
-              <div className="text-center">
-                <Button onClick={onUserAnswer} className="px-12 py-4 text-lg">
-                  Check Answer
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="text-center">
-                <p className={`text-4xl font-semibold mb-6 ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
-                  {isCorrect ? 'Correct! 🎉' : 'Not quite...'}
-                </p>
-                
-                {/* French Word with Pronunciation */}
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <p className="text-3xl font-bold text-gray-900">{word.french_word}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => speakWord(word.french_word, 'fr-FR')}
-                    className="p-2"
-                  >
-                    <Volume2 className="h-5 w-5" />
-                  </Button>
+      <CardContent className="p-8">
+        <div className={`flash-card ${showAnswer ? 'flipped' : ''}`} style={{ minHeight: '500px' }}>
+          <div className="flash-card-inner">
+            {/* Front of Card - Question */}
+            <div className="flash-card-front">
+              <div className="flex flex-col h-full">
+                {/* Status on top */}
+                <div className="text-center mb-8">
+                  <p className="text-sm text-gray-500">{prompt}</p>
                 </div>
 
-                {/* English Translation with Pronunciation */}
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <p className="text-2xl font-medium text-gray-700">{word.english_translation}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => speakWord(word.english_translation, 'en-US')}
-                    className="p-2"
-                  >
-                    <Volume2 className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                {/* Example Sentence with Pronunciation */}
-                {word.example_sentence && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-2">Example:</p>
-                    <div className="flex items-center justify-center gap-4">
-                      <p className="text-base italic">{word.example_sentence}</p>
+                {/* Main content */}
+                <div className="flex-1 flex flex-col justify-center items-center">
+                  {cardType === 'listening' ? (
+                    <div className="text-center space-y-6">
+                      <div className="text-6xl">🎧</div>
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => speakWord(word.example_sentence, 'fr-FR')}
+                        variant="outline"
+                        size="lg"
+                        onClick={() => speakWord(word.french_word, 'fr-FR')}
+                        className="text-xl px-8 py-4"
                       >
-                        <Volume2 className="h-4 w-4" />
+                        <Volume2 className="h-8 w-8 mr-3" />
+                        Listen
                       </Button>
                     </div>
-                    {word.sentence_translation && (
-                      <div className="flex items-center justify-center gap-4 mt-2">
-                        <p className="text-sm text-gray-500">
-                          {word.sentence_translation}
-                        </p>
+                  ) : (
+                    <div className="text-center space-y-6">
+                      <div className="text-6xl font-bold text-gray-900 mb-8">
+                        {promptText}
+                      </div>
+                      <input
+                        type="text"
+                        value={userAnswer}
+                        onChange={(e) => setUserAnswer(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && onUserAnswer()}
+                        placeholder="Type your answer..."
+                        className="w-full max-w-md p-4 border-2 border-gray-300 rounded-lg text-center text-2xl focus:border-blue-500 focus:outline-none"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Check Answer Button */}
+                <div className="text-center mt-8">
+                  <Button 
+                    onClick={onUserAnswer} 
+                    className="px-12 py-4 text-xl bg-blue-600 hover:bg-blue-700"
+                  >
+                    Check Answer
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Back of Card - Answer */}
+            <div className="flash-card-back">
+              <div className="flex flex-col h-full">
+                {/* Status on top */}
+                <div className="text-center mb-6">
+                  <p className={`text-lg font-semibold ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                    {isCorrect ? 'Correct! 🎉' : 'Not quite...'}
+                  </p>
+                </div>
+
+                {/* Main content */}
+                <div className="flex-1 flex flex-col justify-center items-center space-y-6">
+                  {/* French Word with Pronunciation */}
+                  <div className="flex items-center justify-center gap-4">
+                    <p className="text-4xl font-bold text-gray-900">{word.french_word}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => speakWord(word.french_word, 'fr-FR')}
+                      className="p-2"
+                    >
+                      <Volume2 className="h-6 w-6" />
+                    </Button>
+                  </div>
+
+                  {/* English Translation with Pronunciation */}
+                  <div className="flex items-center justify-center gap-4">
+                    <p className="text-2xl font-medium text-gray-700">{word.english_translation}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => speakWord(word.english_translation, 'en-US')}
+                      className="p-2"
+                    >
+                      <Volume2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  {/* Example Sentence with Pronunciation */}
+                  {word.example_sentence && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-2">Example:</p>
+                      <div className="flex items-center justify-center gap-4">
+                        <p className="text-base italic">{word.example_sentence}</p>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => speakWord(word.sentence_translation, 'en-US')}
+                          onClick={() => speakWord(word.example_sentence, 'fr-FR')}
                         >
                           <Volume2 className="h-4 w-4" />
                         </Button>
                       </div>
+                      {word.sentence_translation && (
+                        <div className="flex items-center justify-center gap-4 mt-2">
+                          <p className="text-sm text-gray-500">
+                            {word.sentence_translation}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => speakWord(word.sentence_translation, 'en-US')}
+                          >
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom section */}
+                <div className="mt-8 space-y-4">
+                  {/* SRS Rating Buttons */}
+                  <div className="grid grid-cols-4 gap-3">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => onAnswer('again')}
+                      className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 text-lg"
+                    >
+                      Again
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => onAnswer('hard')}
+                      className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 text-lg"
+                    >
+                      Hard
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => onAnswer('good')}
+                      className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-lg"
+                    >
+                      Good
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => onAnswer('easy')}
+                      className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100 text-lg"
+                    >
+                      Easy
+                    </Button>
+                  </div>
+
+                  {/* Add/Remove from Leeches Option */}
+                  <div className="text-center pt-4 border-t">
+                    {currentWord?.is_leech ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onAnswer('remove-leech')}
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Remove from Leeches
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onAnswer('leech')}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Add to Leeches
+                      </Button>
                     )}
                   </div>
-                )}
-              </div>
-
-              {/* SRS Rating Buttons */}
-              <div className="grid grid-cols-4 gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => onAnswer('again')}
-                  className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 text-lg"
-                >
-                  Again
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => onAnswer('hard')}
-                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 text-lg"
-                >
-                  Hard
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => onAnswer('good')}
-                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-lg"
-                >
-                  Good
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => onAnswer('easy')}
-                  className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100 text-lg"
-                >
-                  Easy
-                </Button>
-              </div>
-
-              {/* Add/Remove from Leeches Option */}
-              <div className="text-center pt-4 border-t">
-                {currentWord?.is_leech ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onAnswer('remove-leech')}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Remove from Leeches
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onAnswer('leech')}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    Add to Leeches
-                  </Button>
-                )}
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
