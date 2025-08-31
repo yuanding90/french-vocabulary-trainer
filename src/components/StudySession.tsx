@@ -507,7 +507,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       })
 
       // Upsert progress
-      let { error } = await supabase
+      const { error } = await supabase
         .from('user_progress')
         .upsert(progressData, { onConflict: 'user_id,word_id,deck_id' })
 
