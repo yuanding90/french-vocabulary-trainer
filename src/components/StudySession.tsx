@@ -245,7 +245,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
     // Update session progress
     setSessionProgress(prev => ({
       ...prev,
-      total: prev.total + 1,
+      reviewed: prev.reviewed + 1,
       [rating]: prev[rating as keyof SessionProgress] + 1
     }))
 
@@ -298,6 +298,12 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       if (error) throw error
       console.log('Word marked as leech:', word.french_word)
       
+      // Update session progress
+      setSessionProgress(prev => ({
+        ...prev,
+        reviewed: prev.reviewed + 1
+      }))
+      
       // Move to next word after marking as leech
       if (currentWordIndex < sessionWords.length - 1) {
         const nextIndex = currentWordIndex + 1
@@ -347,6 +353,12 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
 
       if (error) throw error
       console.log('Word removed from leeches:', word.french_word)
+      
+      // Update session progress
+      setSessionProgress(prev => ({
+        ...prev,
+        reviewed: prev.reviewed + 1
+      }))
       
       // Move to next word after removing from leeches
       if (currentWordIndex < sessionWords.length - 1) {
