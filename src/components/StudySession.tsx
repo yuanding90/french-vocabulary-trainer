@@ -22,7 +22,10 @@ import {
   speakText, 
   getCardType, 
   checkAnswer,
-  normalizeText 
+  normalizeText,
+  logRating,
+  getRecentRatings,
+  shouldRemoveFromLeech
 } from '@/lib/utils'
 
 interface StudySessionProps {
@@ -317,39 +320,60 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
       let newInterval = 0
       let newEaseFactor = SRS.EASE_FACTOR_DEFAULT
       let newAgainCount = 0
+      let newRepetitions = 0
 
       if (sessionType === 'review') {
-        // SRS logic for review sessions
+        // Enhanced SRS logic for review sessions
         const currentInterval = existingProgress?.interval || 0
         const currentEaseFactor = existingProgress?.ease_factor || SRS.EASE_FACTOR_DEFAULT
         const currentAgainCount = existingProgress?.again_count || 0
+        const currentRepetitions = existingProgress?.repetitions || 0
 
+        // Use the new SRS calculation function
+        const srsResult = calculateNextReview(
+          currentInterval,
+          currentEaseFactor,
+          currentRepetitions,
+          rating as 'again' | 'hard' | 'good' | 'easy'
+        )
+
+        newInterval = srsResult.interval
+        newEaseFactor = srsResult.easeFactor
+        newRepetitions = srsResult.repetitions
+
+        // Handle again count
         if (rating === 'again') {
-          newInterval = SRS.AGAIN_INTERVAL
-          newEaseFactor = Math.max(SRS.MIN_EASE_FACTOR, currentEaseFactor - 0.2)
           newAgainCount = currentAgainCount + 1
-        } else if (rating === 'hard') {
-          newInterval = Math.max(1, Math.floor(currentInterval * 0.6))
-          newEaseFactor = Math.max(SRS.MIN_EASE_FACTOR, currentEaseFactor - 0.15)
-          newAgainCount = currentAgainCount
-        } else if (rating === 'good') {
-          newInterval = Math.floor(currentInterval * currentEaseFactor)
-          newEaseFactor = currentEaseFactor
-          newAgainCount = currentAgainCount
-        } else if (rating === 'easy') {
-          newInterval = Math.floor(currentInterval * currentEaseFactor * 1.3)
-          newEaseFactor = currentEaseFactor + 0.15
+        } else {
           newAgainCount = currentAgainCount
         }
+
+        // Check for leech removal
+        if (currentAgainCount >= SRS.LEECH_THRESHOLD) {
+          const recentRatings = await getRecentRatings(user.id, word.id)
+          if (shouldRemoveFromLeech(rating as 'again' | 'hard' | 'good' | 'easy', newInterval, recentRatings)) {
+            newAgainCount = 0 // Remove from leeches
+            console.log(`✅ Word "${word.french_word}" removed from leeches after 2 consecutive "Easy" ratings`)
+          }
+        }
+
+        // Log the rating for history tracking
+        await logRating(user.id, word.id, currentDeck.id, rating as 'again' | 'hard' | 'good' | 'easy')
+
       } else if (sessionType === 'discovery') {
         // Discovery session logic
         if (rating === 'know') {
           newInterval = SRS.MASTERED_INTERVAL
           newEaseFactor = SRS.EASE_FACTOR_DEFAULT
+          newRepetitions = 1
         } else {
           newInterval = 0
           newEaseFactor = SRS.EASE_FACTOR_DEFAULT
+          newRepetitions = 0
         }
+
+        // Log the rating for discovery sessions
+        await logRating(user.id, word.id, currentDeck.id, rating as 'learn' | 'know')
       }
 
       const nextReviewDate = new Date()
@@ -364,7 +388,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
           user_id: user.id,
           word_id: word.id,
           deck_id: currentDeck.id,
-          repetitions: existingProgress?.repetitions || 0,
+          repetitions: newRepetitions,
           interval: newInterval,
           ease_factor: newEaseFactor,
           next_review_date: nextReviewDate.toISOString(),
@@ -388,7 +412,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
             user_id: user.id,
             word_id: word.id,
             deck_id: currentDeck.id,
-            repetitions: existingProgress?.repetitions || 0,
+            repetitions: newRepetitions,
             interval: newInterval,
             ease_factor: newEaseFactor,
             next_review_date: nextReviewDate.toISOString(),
@@ -401,7 +425,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
           const { error: updateError } = await supabase
             .from('user_progress')
             .update({
-              repetitions: existingProgress?.repetitions || 0,
+              repetitions: newRepetitions,
               interval: newInterval,
               ease_factor: newEaseFactor,
               next_review_date: nextReviewDate.toISOString(),

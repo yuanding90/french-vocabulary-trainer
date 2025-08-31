@@ -20,6 +20,53 @@ export interface QueueManager {
 }
 
 export class SessionQueueManager implements QueueManager {
+  // Apply smart spacing for leeches to prevent fatigue
+  private applyLeechSpacing(words: Vocabulary[], progressMap: Map<string, any>): Vocabulary[] {
+    // Separate leeches from regular words
+    const leeches: Vocabulary[] = []
+    const regularWords: Vocabulary[] = []
+    
+    words.forEach(word => {
+      const progress = progressMap.get(word.id)
+      const isLeech = progress && progress.again_count >= 4
+      
+      if (isLeech) {
+        leeches.push(word)
+      } else {
+        regularWords.push(word)
+      }
+    })
+    
+    // Shuffle both arrays
+    leeches.sort(() => Math.random() - 0.5)
+    regularWords.sort(() => Math.random() - 0.5)
+    
+    // Apply spacing: insert leeches every 3-5 regular words
+    const spacedWords: Vocabulary[] = []
+    const spacingRange = { min: 3, max: 5 }
+    let leechIndex = 0
+    let regularIndex = 0
+    let wordsSinceLastLeech = 0
+    
+    while (leechIndex < leeches.length || regularIndex < regularWords.length) {
+      // Decide whether to add a leech or regular word
+      const shouldAddLeech = leechIndex < leeches.length && 
+                           (wordsSinceLastLeech >= spacingRange.min || regularIndex >= regularWords.length)
+      
+      if (shouldAddLeech) {
+        spacedWords.push(leeches[leechIndex])
+        leechIndex++
+        wordsSinceLastLeech = 0
+      } else if (regularIndex < regularWords.length) {
+        spacedWords.push(regularWords[regularIndex])
+        regularIndex++
+        wordsSinceLastLeech++
+      }
+    }
+    
+    return spacedWords
+  }
+
   async buildQueues(deckId: string, userId: string) {
     try {
       // Get all vocabulary for the deck
@@ -77,7 +124,10 @@ export class SessionQueueManager implements QueueManager {
         }
       })
 
-      return { unseen, review, practice, nearFuture }
+      // Apply leech spacing to review queue
+      const spacedReview = this.applyLeechSpacing(review, progressMap)
+
+      return { unseen, review: spacedReview, practice, nearFuture }
     } catch (error) {
       console.error('Error building queues:', error)
       return { unseen: [], review: [], practice: [], nearFuture: [] }
