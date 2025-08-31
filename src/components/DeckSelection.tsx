@@ -30,7 +30,6 @@ export default function DeckSelection({ onBack }: DeckSelectionProps) {
     setCurrentDeck 
   } = useVocabularyStore()
   const [loading, setLoading] = useState(true)
-  const [selectedDeck, setSelectedDeck] = useState<VocabularyDeck | null>(null)
 
   useEffect(() => {
     loadDecks()
@@ -99,16 +98,9 @@ export default function DeckSelection({ onBack }: DeckSelectionProps) {
   }
 
   const handleDeckSelect = (deck: VocabularyDeck) => {
-    setSelectedDeck(deck)
-  }
-
-  const handleContinue = () => {
-    if (selectedDeck) {
-      // Set the current deck in the store
-      setCurrentDeck(selectedDeck)
-      // Go back to dashboard
-      onBack()
-    }
+    // Set the current deck in the store and return to dashboard immediately
+    setCurrentDeck(deck)
+    onBack()
   }
 
   const getProgressPercentage = (deckId: string) => {
@@ -156,112 +148,109 @@ export default function DeckSelection({ onBack }: DeckSelectionProps) {
         </p>
       </div>
 
-      {/* Decks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {availableDecks.map((deck) => {
-          const progress = userDeckProgress[deck.id] || {
-            words_learned: 0,
-            words_mastered: 0,
-            total_reviews: 0,
-            current_streak: 0
-          }
-          const progressPercentage = getProgressPercentage(deck.id)
-          
-          return (
-            <Card 
-              key={deck.id} 
-              className={`cursor-pointer transition-all hover:shadow-lg ${
-                selectedDeck?.id === deck.id ? 'ring-2 ring-blue-500' : ''
-              }`}
-              onClick={() => handleDeckSelect(deck)}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    {deck.name}
-                  </CardTitle>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(deck.difficulty_level)}`}>
-                    {deck.difficulty_level}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600">{deck.description}</p>
-              </CardHeader>
-              
-              <CardContent>
-                {/* Progress Overview */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Progress</span>
-                    <span className="font-medium">
-                      {progress.words_mastered} / {deck.total_words} mastered
-                    </span>
+      {/* Compact Deck List */}
+      <div className="space-y-3">
+        {availableDecks
+          .sort((a, b) => {
+            const aMatch = a.name.match(/Deck (\d+):/);
+            const bMatch = b.name.match(/Deck (\d+):/);
+            if (aMatch && bMatch) {
+              return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+            }
+            return a.name.localeCompare(b.name);
+          })
+          .map((deck) => {
+            const progress = userDeckProgress[deck.id] || {
+              words_learned: 0,
+              words_mastered: 0,
+              total_reviews: 0,
+              current_streak: 0
+            }
+            
+            // Calculate progress percentages for different states
+            const totalWords = deck.total_words
+            const mastered = progress.words_mastered
+            const learning = progress.words_learned - progress.words_mastered
+            const unseen = totalWords - progress.words_learned
+            
+            return (
+              <Card 
+                key={deck.id} 
+                className="cursor-pointer transition-all hover:shadow-lg hover:bg-gray-50"
+                onClick={() => handleDeckSelect(deck)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <BookOpen className="h-5 w-5 text-blue-600" />
+                        <h3 className="font-semibold text-lg">{deck.name}</h3>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                          {deck.difficulty_level}
+                        </span>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Progress Overview</span>
+                          <span>{progress.words_mastered}/{totalWords} mastered</span>
+                        </div>
+                        
+                        <div className="flex h-3 bg-gray-200 rounded-full overflow-hidden">
+                          {/* Unseen */}
+                          <div 
+                            className="bg-gray-400"
+                            style={{ width: `${(unseen / totalWords) * 100}%` }}
+                            title={`${unseen} unseen`}
+                          />
+                          {/* Learning */}
+                          <div 
+                            className="bg-orange-400"
+                            style={{ width: `${(learning / totalWords) * 100}%` }}
+                            title={`${learning} learning`}
+                          />
+                          {/* Strengthening */}
+                          <div 
+                            className="bg-yellow-400"
+                            style={{ width: `${(Math.max(0, progress.words_learned - progress.words_mastered - learning) / totalWords) * 100}%` }}
+                            title="strengthening"
+                          />
+                          {/* Mastered */}
+                          <div 
+                            className="bg-green-500"
+                            style={{ width: `${(mastered / totalWords) * 100}%` }}
+                            title={`${mastered} mastered`}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>Unseen: {unseen}</span>
+                          <span>Learning: {learning}</span>
+                          <span>Strengthening: {Math.max(0, progress.words_learned - progress.words_mastered - learning)}</span>
+                          <span>Mastered: {mastered}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right ml-4">
+                      <div className="text-2xl font-bold text-blue-600">{totalWords}</div>
+                      <div className="text-sm text-gray-600">words</div>
+                      {progress.current_streak > 0 && (
+                        <div className="flex items-center gap-1 text-orange-600 text-sm mt-1">
+                          <Flame className="h-3 w-3" />
+                          {progress.current_streak}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <Progress value={progressPercentage} className="h-2" />
-                  
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600">
-                        {progress.words_learned}
-                      </div>
-                      <div className="text-xs text-gray-500">Words Learned</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">
-                        {progress.words_mastered}
-                      </div>
-                      <div className="text-xs text-gray-500">Mastered</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-purple-600">
-                        {progress.total_reviews}
-                      </div>
-                      <div className="text-xs text-gray-500">Total Reviews</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold flex items-center justify-center gap-1">
-                        {progress.current_streak}
-                        <Flame className="h-4 w-4 text-orange-500" />
-                      </div>
-                      <div className="text-xs text-gray-500">Current Streak</div>
-                    </div>
-                  </div>
-                  
-                  {/* Last Studied */}
-                  {progress.last_studied_at && (
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Clock className="h-4 w-4" />
-                      Last studied: {new Date(progress.last_studied_at).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+                </CardContent>
+              </Card>
+            )
+          })}
       </div>
 
-      {/* Continue Button */}
-      {selectedDeck && (
-        <div className="mt-8 text-center">
-          <Button 
-            size="lg" 
-            className="px-8"
-            onClick={handleContinue}
-          >
-            <Play className="h-5 w-5 mr-2" />
-            Continue with {selectedDeck.name}
-          </Button>
-        </div>
-      )}
 
-      {/* Instructions */}
-      {!selectedDeck && (
-        <div className="mt-8 text-center text-gray-500">
-          <p>Click on a deck above to select it, then click "Continue" to start studying.</p>
-        </div>
-      )}
     </div>
   )
 }
