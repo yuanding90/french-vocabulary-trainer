@@ -53,6 +53,14 @@ French Vocabulary Trainer with comprehensive deck system, spaced repetition lear
 
 ## Pending Changes (To-Do List)
 
+### 🔄 NEW PRIORITY: Dashboard Layout Improvements
+**Status:** Ready to implement
+**Changes needed:**
+1. Remove Quick Actions bar entirely on landing page
+2. Put Recent Activity below Current Deck and above Deck Progress
+3. Put Unseen/Leeches/Learning etc. inside Deck Progress, add progress bar, remove Total words/mastered/progress
+4. In Review and Discovery, put better visualization buttons on Start Review and Start Discovery
+
 ### 🔄 Step 3: Move Learning Types to Bottom
 **Status:** Ready to implement
 **Changes needed:**

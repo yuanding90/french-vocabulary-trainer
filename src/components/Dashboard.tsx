@@ -338,77 +338,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Current Deck Progress */}
-      {currentDeck && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Deck Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{totalWords}</p>
-                <p className="text-sm text-gray-600">Total Words</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{totalMastered}</p>
-                <p className="text-sm text-gray-600">Mastered</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">{Math.round(progressPercentage)}%</p>
-                <p className="text-sm text-gray-600">Progress</p>
-              </div>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-          </CardContent>
-        </Card>
-      )}
-
-
-
-      {/* Progress Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-500">{metrics.unseen}</p>
-            <p className="text-sm text-gray-600">Unseen</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-red-500">{metrics.leeches}</p>
-            <p className="text-sm text-gray-600">Leeches</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-orange-500">{metrics.learning}</p>
-            <p className="text-sm text-gray-600">Learning</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-yellow-500">{metrics.strengthening}</p>
-            <p className="text-sm text-gray-600">Strengthening</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-blue-500">{metrics.consolidating}</p>
-            <p className="text-sm text-gray-600">Consolidating</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-indigo-500">{metrics.mastered}</p>
-            <p className="text-sm text-gray-600">Mastered</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Recent Activity */}
       <Card className="mb-8">
         <CardHeader>
@@ -438,6 +367,56 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Current Deck Progress */}
+      {currentDeck && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Deck Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Overall Progress</span>
+                <span>{Math.round(progressPercentage)}%</span>
+              </div>
+              <Progress value={progressPercentage} className="h-3" />
+            </div>
+
+            {/* Word Categories */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-gray-500">{metrics.unseen}</p>
+                <p className="text-sm text-gray-600">Unseen</p>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <p className="text-2xl font-bold text-red-500">{metrics.leeches}</p>
+                <p className="text-sm text-gray-600">Leeches</p>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <p className="text-2xl font-bold text-orange-500">{metrics.learning}</p>
+                <p className="text-sm text-gray-600">Learning</p>
+              </div>
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                <p className="text-2xl font-bold text-yellow-500">{metrics.strengthening}</p>
+                <p className="text-sm text-gray-600">Strengthening</p>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-500">{metrics.consolidating}</p>
+                <p className="text-sm text-gray-600">Consolidating</p>
+              </div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-500">{metrics.mastered}</p>
+                <p className="text-sm text-gray-600">Mastered</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Session Types */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -475,9 +454,10 @@ export default function Dashboard() {
             
             <Button 
               onClick={() => handleStartSession('review')}
-              className="w-full"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg"
               disabled={!currentDeck || sessionSettings.types.length === 0}
             >
+              <Play className="h-5 w-5 mr-2" />
               Start Review
             </Button>
           </CardContent>
@@ -505,9 +485,10 @@ export default function Dashboard() {
             
             <Button 
               onClick={() => handleStartSession('discovery')}
-              className="w-full"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-lg"
               disabled={!currentDeck || sessionSettings.types.length === 0}
             >
+              <Target className="h-5 w-5 mr-2" />
               Start Discovery
             </Button>
           </CardContent>
@@ -541,9 +522,10 @@ export default function Dashboard() {
               
               <Button 
                 onClick={() => handleStartSession('deep-dive')}
-                className="w-full"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 text-lg"
                 disabled={!currentDeck || sessionSettings.types.length === 0 || !deepDiveCategory}
               >
+                <Brain className="h-5 w-5 mr-2" />
                 Start Deep Dive
               </Button>
             </div>
@@ -692,31 +674,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-12" 
-              onClick={() => setShowDeckSelection(true)}
-            >
-              <LibraryBig className="h-4 w-4 mr-2" />
-              Choose Deck
-            </Button>
-            <Button variant="outline" className="h-12">
-              <Dumbbell className="h-4 w-4 mr-2" />
-              Practice Mode (Coming Soon)
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }
