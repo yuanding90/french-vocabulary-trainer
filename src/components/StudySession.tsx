@@ -210,9 +210,14 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
           }
           return {
             ...word,
-            // Preserve the word's integer ID and merge progress data
-            id: word.id, // Keep the original integer ID from vocabulary
-            ...progress // Merge progress data (but don't override id)
+            // Only merge specific progress fields, not the entire progress object
+            repetitions: progress?.repetitions || 0,
+            interval: progress?.interval || 0,
+            ease_factor: progress?.ease_factor || 2.5,
+            next_review_date: progress?.next_review_date || null,
+            again_count: progress?.again_count || 0,
+            // Keep the word's original integer ID
+            id: word.id
           }
         })
 
