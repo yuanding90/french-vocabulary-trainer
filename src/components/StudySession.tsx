@@ -114,17 +114,47 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
 
           if (!progressError && userProgress) {
             if (sessionType === 'review') {
-              const dueWords = userProgress.filter(progress => {
+              // Create a map of word progress for efficient lookup
+              const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
+              
+              // Step 1: Check for Due Now words (overdue for review)
+              const dueNowWords = userProgress.filter(progress => {
                 const nextReview = new Date(progress.next_review_date)
                 return nextReview <= new Date()
               })
               
-              if (dueWords.length > 0) {
-                const dueWordIds = dueWords.map(p => p.word_id)
-                filteredWords = words.filter(word => dueWordIds.includes(word.id))
+              if (dueNowWords.length > 0) {
+                // Use Due Now words
+                const dueNowWordIds = dueNowWords.map(p => p.word_id)
+                filteredWords = words.filter(word => dueNowWordIds.includes(word.id))
+                console.log(`Review session: Using ${dueNowWords.length} Due Now words`)
               } else {
-                // If no words are due, show all words for practice
-                filteredWords = words
+                // Step 2: Check for Due Soon words (coming up in next 24 hours)
+                const dueSoonWords = userProgress.filter(progress => {
+                  const nextReview = new Date(progress.next_review_date)
+                  const tomorrow = new Date()
+                  tomorrow.setDate(tomorrow.getDate() + 1)
+                  return nextReview <= tomorrow && nextReview > new Date()
+                })
+                
+                if (dueSoonWords.length > 0) {
+                  // Use Due Soon words
+                  const dueSoonWordIds = dueSoonWords.map(p => p.word_id)
+                  filteredWords = words.filter(word => dueSoonWordIds.includes(word.id))
+                  console.log(`Review session: Using ${dueSoonWords.length} Due Soon words`)
+                } else {
+                  // Step 3: Use Unseen words (no progress record)
+                  const unseenWords = words.filter(word => !progressMap.has(word.id))
+                  
+                  if (unseenWords.length > 0) {
+                    filteredWords = unseenWords
+                    console.log(`Review session: Using ${unseenWords.length} Unseen words`)
+                  } else {
+                    // Fallback: use all words for practice
+                    filteredWords = words
+                    console.log(`Review session: Using all ${words.length} words for practice`)
+                  }
+                }
               }
             } else if (sessionType === 'discovery') {
               // For discovery sessions, exclude words that have already been learned
