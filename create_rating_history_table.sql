@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS rating_history CASCADE;
 CREATE TABLE rating_history (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    word_id UUID NOT NULL REFERENCES vocabulary(id) ON DELETE CASCADE,
+    word_id INTEGER NOT NULL REFERENCES vocabulary(id) ON DELETE CASCADE,
     deck_id UUID NOT NULL REFERENCES vocabulary_decks(id) ON DELETE CASCADE,
     rating TEXT NOT NULL CHECK (rating IN ('again', 'hard', 'good', 'easy', 'learn', 'know')),
     timestamp TIMESTAMPTZ DEFAULT NOW(),
