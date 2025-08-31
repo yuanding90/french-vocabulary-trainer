@@ -266,6 +266,7 @@ export default function Dashboard() {
       <StudySession 
         sessionType={sessionType}
         onBack={handleSessionEnd}
+        deepDiveCategory={deepDiveCategory}
       />
     )
   }
@@ -483,13 +484,29 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-4">
               Focus on specific categories like leeches or learning words
             </p>
-            <Button 
-              onClick={() => handleStartSession('deep-dive')}
-              className="w-full"
-              disabled={!currentDeck || sessionSettings.types.length === 0}
-            >
-              Start Deep Dive
-            </Button>
+            
+            <div className="space-y-4">
+              <select
+                value={deepDiveCategory || ''}
+                onChange={(e) => setDeepDiveCategory(e.target.value as any)}
+                className="w-full p-3 border border-gray-300 rounded-lg bg-white"
+                disabled={!currentDeck || sessionSettings.types.length === 0}
+              >
+                <option value="">Select a category...</option>
+                <option value="leeches">Leeches (struggling words)</option>
+                <option value="learning">Learning (new words)</option>
+                <option value="strengthening">Strengthening (improving words)</option>
+                <option value="consolidating">Consolidating (mastering words)</option>
+              </select>
+              
+              <Button 
+                onClick={() => handleStartSession('deep-dive')}
+                className="w-full"
+                disabled={!currentDeck || sessionSettings.types.length === 0 || !deepDiveCategory}
+              >
+                Start Deep Dive
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -27,6 +27,7 @@ import {
 interface StudySessionProps {
   onBack: () => void
   sessionType: 'review' | 'discovery' | 'deep-dive'
+  deepDiveCategory?: 'leeches' | 'learning' | 'strengthening' | 'consolidating' | null
 }
 
 interface SessionProgress {
@@ -39,7 +40,7 @@ interface SessionProgress {
   know: number
 }
 
-export default function StudySession({ onBack, sessionType }: StudySessionProps) {
+export default function StudySession({ onBack, sessionType, deepDiveCategory }: StudySessionProps) {
   const { currentDeck, setCurrentWord, setSessionWords, sessionSettings } = useVocabularyStore()
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const [sessionWords, setLocalSessionWords] = useState<any[]>([])
@@ -111,17 +112,40 @@ export default function StudySession({ onBack, sessionType }: StudySessionProps)
               .eq('deck_id', currentDeck.id)
 
             if (!progressError && userProgress) {
-              const dueWords = userProgress.filter(progress => {
-                const nextReview = new Date(progress.next_review_date)
-                return nextReview <= new Date()
-              })
-              
-              if (dueWords.length > 0) {
-                const dueWordIds = dueWords.map(p => p.word_id)
-                filteredWords = words.filter(word => dueWordIds.includes(word.id))
-              } else {
-                // If no words are due, show all words for practice
-                filteredWords = words
+              if (sessionType === 'review') {
+                const dueWords = userProgress.filter(progress => {
+                  const nextReview = new Date(progress.next_review_date)
+                  return nextReview <= new Date()
+                })
+                
+                if (dueWords.length > 0) {
+                  const dueWordIds = dueWords.map(p => p.word_id)
+                  filteredWords = words.filter(word => dueWordIds.includes(word.id))
+                } else {
+                  // If no words are due, show all words for practice
+                  filteredWords = words
+                }
+              } else if (sessionType === 'deep-dive' && deepDiveCategory) {
+                // For deep dive, filter based on selected category
+                const progressMap = new Map(userProgress.map(p => [p.word_id, p]))
+                
+                filteredWords = words.filter(word => {
+                  const progress = progressMap.get(word.id)
+                  if (!progress) return false
+                  
+                  switch (deepDiveCategory) {
+                    case 'leeches':
+                      return progress.again_count >= 4
+                    case 'learning':
+                      return progress.again_count < 4 && progress.interval < 7
+                    case 'strengthening':
+                      return progress.again_count < 4 && progress.interval >= 7 && progress.interval < 21
+                    case 'consolidating':
+                      return progress.again_count < 4 && progress.interval >= 21 && progress.interval < 60
+                    default:
+                      return false
+                  }
+                })
               }
             }
           }
