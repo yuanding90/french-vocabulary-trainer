@@ -460,19 +460,34 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
         nextReviewDate.setDate(nextReviewDate.getDate() + newInterval)
       }
 
+      // Log the data being sent for debugging
+      const progressData = {
+        user_id: user.id,
+        word_id: typeof word.id === 'string' ? parseInt(word.id) : word.id,
+        deck_id: currentDeck.id,
+        repetitions: newRepetitions,
+        interval: newInterval,
+        ease_factor: newEaseFactor,
+        next_review_date: nextReviewDate.toISOString(),
+        again_count: newAgainCount
+      }
+      
+      console.log('Attempting to save progress with data:', progressData)
+      console.log('Data types:', {
+        user_id: typeof progressData.user_id,
+        word_id: typeof progressData.word_id,
+        deck_id: typeof progressData.deck_id,
+        repetitions: typeof progressData.repetitions,
+        interval: typeof progressData.interval,
+        ease_factor: typeof progressData.ease_factor,
+        next_review_date: typeof progressData.next_review_date,
+        again_count: typeof progressData.again_count
+      })
+
       // Upsert progress
       let { error } = await supabase
         .from('user_progress')
-        .upsert({
-          user_id: user.id,
-          word_id: word.id,
-          deck_id: currentDeck.id,
-          repetitions: newRepetitions,
-          interval: newInterval,
-          ease_factor: newEaseFactor,
-          next_review_date: nextReviewDate.toISOString(),
-          again_count: newAgainCount
-        }, { onConflict: 'user_id,word_id,deck_id' })
+        .upsert(progressData, { onConflict: 'user_id,word_id,deck_id' })
 
       if (error) {
         console.error('Error saving word progress:', error)
@@ -482,6 +497,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
           hint: error.hint,
           code: error.code
         })
+        console.error('Full error object:', JSON.stringify(error, null, 2))
         
         // Fallback: try insert, then update if that fails
         console.log('Attempting fallback strategy...')
