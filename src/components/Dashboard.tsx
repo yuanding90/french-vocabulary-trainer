@@ -311,7 +311,13 @@ export default function Dashboard() {
 
       {/* Recent Activity - At the very top */}
       <Card className="mb-6">
-        <CardContent className="p-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Activity className="h-5 w-5" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 px-4 pb-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
             <div>
               <p className="text-2xl font-bold text-blue-600">{sessionStats.reviewsToday}</p>
@@ -414,41 +420,43 @@ export default function Dashboard() {
 
       {/* Session Types */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Play className="h-5 w-5" />
               Review
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">
-              Review words you've learned using spaced repetition
-            </p>
-            
-            {/* Queue Numbers */}
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              {reviewQueue.length > 0 ? (
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{reviewQueue.length}</div>
-                  <div className="text-sm text-blue-600">Due Now</div>
-                </div>
-              ) : nearFutureQueue.length > 0 ? (
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{nearFutureQueue.length}</div>
-                  <div className="text-sm text-orange-600">Due Soon</div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-400">0</div>
-                  <div className="text-sm text-gray-400">No words due</div>
-                </div>
-              )}
+          <CardContent className="flex-1 flex flex-col">
+            <div className="flex-1">
+              <p className="text-gray-600 mb-4">
+                Review words you've learned using spaced repetition
+              </p>
+              
+              {/* Queue Numbers */}
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                {reviewQueue.length > 0 ? (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{reviewQueue.length}</div>
+                    <div className="text-sm text-blue-600">Due Now</div>
+                  </div>
+                ) : nearFutureQueue.length > 0 ? (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">{nearFutureQueue.length}</div>
+                    <div className="text-sm text-orange-600">Due Soon</div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-400">0</div>
+                    <div className="text-sm text-gray-400">No words due</div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <Button 
               onClick={() => handleStartSession('review')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg mt-auto"
               disabled={!currentDeck || sessionSettings.types.length === 0}
             >
               <Play className="h-5 w-5 mr-2" />
@@ -457,29 +465,31 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
               Discovery
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">
-              Learn new words from your selected deck
-            </p>
-            
-            {/* Queue Numbers */}
-            <div className="mb-4 p-3 bg-green-50 rounded-lg">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{unseenQueue.length}</div>
-                <div className="text-sm text-green-600">Unseen Words</div>
+          <CardContent className="flex-1 flex flex-col">
+            <div className="flex-1">
+              <p className="text-gray-600 mb-4">
+                Learn new words from your selected deck
+              </p>
+              
+              {/* Queue Numbers */}
+              <div className="mb-4 p-3 bg-green-50 rounded-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{unseenQueue.length}</div>
+                  <div className="text-sm text-green-600">Unseen Words</div>
+                </div>
               </div>
             </div>
             
             <Button 
               onClick={() => handleStartSession('discovery')}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-lg mt-auto"
               disabled={!currentDeck || sessionSettings.types.length === 0}
             >
               <Target className="h-5 w-5 mr-2" />
@@ -488,19 +498,19 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5" />
               Deep Dive
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">
-              Focus on specific categories like leeches or learning words
-            </p>
-            
-            <div className="space-y-4">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="flex-1">
+              <p className="text-gray-600 mb-4">
+                Focus on specific categories like leeches or learning words
+              </p>
+              
               <select
                 value={deepDiveCategory || ''}
                 onChange={(e) => setDeepDiveCategory(e.target.value as any)}
@@ -513,16 +523,16 @@ export default function Dashboard() {
                 <option value="strengthening">Strengthening (improving words)</option>
                 <option value="consolidating">Consolidating (mastering words)</option>
               </select>
-              
-              <Button 
-                onClick={() => handleStartSession('deep-dive')}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 text-lg"
-                disabled={!currentDeck || sessionSettings.types.length === 0 || !deepDiveCategory}
-              >
-                <Brain className="h-5 w-5 mr-2" />
-                Start Deep Dive
-              </Button>
             </div>
+            
+            <Button 
+              onClick={() => handleStartSession('deep-dive')}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 text-lg mt-auto"
+              disabled={!currentDeck || sessionSettings.types.length === 0 || !deepDiveCategory}
+            >
+              <Brain className="h-5 w-5 mr-2" />
+              Start Deep Dive
+            </Button>
           </CardContent>
         </Card>
       </div>
