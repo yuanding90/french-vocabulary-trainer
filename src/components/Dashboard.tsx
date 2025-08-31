@@ -66,6 +66,19 @@ export default function Dashboard() {
     loadDashboardData()
   }, [])
 
+  // Reload deck-specific data when current deck changes
+  useEffect(() => {
+    if (currentDeck) {
+      const loadCurrentDeckData = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await loadDeckData(currentDeck.id, user.id)
+        }
+      }
+      loadCurrentDeckData()
+    }
+  }, [currentDeck])
+
   const loadDashboardData = async () => {
     try {
       setLoading(true)
