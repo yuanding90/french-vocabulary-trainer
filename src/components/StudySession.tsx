@@ -36,6 +36,7 @@ interface StudySessionProps {
 
 interface SessionProgress {
   total: number
+  reviewed: number
   again: number
   hard: number
   good: number
@@ -55,6 +56,7 @@ export default function StudySession({ onBack, sessionType, deepDiveCategory }: 
   const [isCorrect, setIsCorrect] = useState(false)
   const [sessionProgress, setSessionProgress] = useState<SessionProgress>({
     total: 0,
+    reviewed: 0,
     again: 0,
     hard: 0,
     good: 0,
