@@ -24,7 +24,10 @@ import {
   Settings,
   Eye,
   MessageSquare,
-  Ear
+  Ear,
+  Zap,
+  Clock,
+  EyeOff
 } from 'lucide-react'
 import DeckSelection from './DeckSelection'
 import StudySession from './StudySession'
@@ -46,7 +49,11 @@ export default function Dashboard() {
     setUnseenQueue,
     setReviewQueue,
     setPracticePool,
-    setNearFutureQueue
+    setNearFutureQueue,
+    unseenQueue,
+    reviewQueue,
+    practicePool,
+    nearFutureQueue
   } = useVocabularyStore()
 
   const [loading, setLoading] = useState(true)
@@ -486,6 +493,55 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Queue Status - At the very bottom */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Queue Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 border rounded-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Zap className="h-5 w-5 text-red-500" />
+                <span className="text-lg font-bold text-red-500">{reviewQueue.length}</span>
+              </div>
+              <p className="text-sm font-medium">Due Now</p>
+              <p className="text-xs text-gray-600">Ready for review</p>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Clock className="h-5 w-5 text-orange-500" />
+                <span className="text-lg font-bold text-orange-500">{nearFutureQueue.length}</span>
+              </div>
+              <p className="text-sm font-medium">Due Soon</p>
+              <p className="text-xs text-gray-600">Coming up next</p>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Brain className="h-5 w-5 text-blue-500" />
+                <span className="text-lg font-bold text-blue-500">{practicePool.length}</span>
+              </div>
+              <p className="text-sm font-medium">Practice</p>
+              <p className="text-xs text-gray-600">Extra practice</p>
+            </div>
+            
+            <div className="text-center p-4 border rounded-lg">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <EyeOff className="h-5 w-5 text-gray-500" />
+                <span className="text-lg font-bold text-gray-500">{unseenQueue.length}</span>
+              </div>
+              <p className="text-sm font-medium">Unseen</p>
+              <p className="text-xs text-gray-600">New words</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Learning Types Configuration - At the bottom */}
       <Card className="mb-8">
