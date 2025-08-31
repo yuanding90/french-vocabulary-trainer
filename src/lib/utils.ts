@@ -147,9 +147,19 @@ export async function logRating(
       })
 
     if (error) {
+      // If table doesn't exist, just log a warning instead of error
+      if (error.code === '42P01') { // Table doesn't exist
+        console.warn('Rating history table not found. Skipping rating log.')
+        return
+      }
       console.error('Error logging rating:', error)
     }
   } catch (error) {
+    // If table doesn't exist, just log a warning instead of error
+    if (error instanceof Error && error.message.includes('relation "rating_history" does not exist')) {
+      console.warn('Rating history table not found. Skipping rating log.')
+      return
+    }
     console.error('Error in logRating:', error)
   }
 }
@@ -169,12 +179,22 @@ export async function getRecentRatings(
       .limit(limit)
 
     if (error) {
+      // If table doesn't exist, just return empty array
+      if (error.code === '42P01') { // Table doesn't exist
+        console.warn('Rating history table not found. Returning empty ratings.')
+        return []
+      }
       console.error('Error getting recent ratings:', error)
       return []
     }
 
     return data?.map(row => row.rating).reverse() || [] // Return in chronological order
   } catch (error) {
+    // If table doesn't exist, just return empty array
+    if (error instanceof Error && error.message.includes('relation "rating_history" does not exist')) {
+      console.warn('Rating history table not found. Returning empty ratings.')
+      return []
+    }
     console.error('Error in getRecentRatings:', error)
     return []
   }
